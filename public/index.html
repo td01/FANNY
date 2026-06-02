@@ -488,7 +488,7 @@ async function speak(text){
   showFannyText(text);
 
   try{
-    const res=await fetch('/api/speak',{
+    const res=await fetch('/.netlify/functions/speak',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({text})
     });
@@ -561,7 +561,7 @@ async function askFanny(userMsg){
   stopListening();
 
   try{
-    const res=await fetch('/api/chat',{
+    const res=await fetch('/.netlify/functions/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:SYSTEM,messages:history})
     });
@@ -659,7 +659,7 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
   initRecognition();
 
   try{
-    const res=await fetch('/api/chat',{
+    const res=await fetch('/.netlify/functions/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Start the debate. Say hi like we're in a pub. Introduce yourself as Fanny very briefly. Ask what country I'm supporting this summer. Max 2 sentences, proper Cockney."}]})
     });
