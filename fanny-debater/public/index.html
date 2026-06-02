@@ -5,675 +5,728 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fanny — Football Fan Debater</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-  :root {
-    --gold: #c8a227;
-    --gold-dim: #c8a22722;
-    --bg: #0a0f1e;
-    --bg-panel: #0d1425;
-    --bg-card: #111827;
-    --bg-bubble-fanny: #141f33;
-    --bg-bubble-user: #1a3352;
-    --border: #1e2a3a;
-    --text: #f0ede4;
-    --text-dim: #888;
-    --text-bubble: #e8e4d8;
-    --text-user-bubble: #c8dff0;
-  }
+:root{
+  --gold:#e8b84b;
+  --gold2:#c49a2a;
+  --bg:#0c0e14;
+  --bg2:#13161f;
+  --bg3:#1a1e2a;
+  --panel:#0f1219;
+  --border:#232738;
+  --text:#eceae0;
+  --muted:#6b7280;
+  --green:#22c55e;
+  --red:#ef4444;
+  --blue:#60a5fa;
+}
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-  }
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overflow:hidden}
 
-  body {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
-  }
+body{display:flex;flex-direction:column;height:100dvh}
 
-  /* ── Header ── */
-  header {
-    background: var(--bg-panel);
-    border-bottom: 2px solid var(--gold);
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-  }
+/* ── pitch texture bg ── */
+body::before{
+  content:'';
+  position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,.012) 40px,rgba(255,255,255,.012) 41px),
+    repeating-linear-gradient(90deg,transparent,transparent 80px,rgba(255,255,255,.008) 80px,rgba(255,255,255,.008) 81px);
+  pointer-events:none;z-index:0;
+}
 
-  .logo-ball {
-    width: 44px; height: 44px;
-    background: var(--gold);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    flex-shrink: 0;
-  }
+/* ── HEADER ── */
+header{
+  position:relative;z-index:10;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:0 20px;
+  display:flex;align-items:center;gap:0;
+  height:56px;flex-shrink:0;
+}
 
-  .logo-text h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: 3px;
-    color: var(--gold);
-    line-height: 1;
-  }
+.logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px;letter-spacing:4px;
+  color:var(--gold);
+  line-height:1;
+  margin-right:12px;
+}
 
-  .logo-text p {
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
+.logo-sep{width:1px;height:24px;background:var(--border);margin:0 12px}
 
-  /* ── Status bar ── */
-  .status-bar {
-    background: #090e1b;
-    padding: 5px 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;line-height:1.3}
+.logo-sub strong{color:var(--text);display:block;font-size:13px;letter-spacing:1px;font-weight:600}
 
-  .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #2d3a2d;
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-  .dot.ready   { background: #3dba4e; }
-  .dot.listen  { background: var(--gold); animation: blink .8s infinite; }
-  .dot.think   { background: #9b6ede; animation: blink 1.2s infinite; }
-  .dot.speak   { background: #4a9ede; animation: blink 1s infinite; }
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
 
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.status-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;
+  font-size:11px;color:var(--muted);letter-spacing:.5px;
+}
+.sdot{width:6px;height:6px;border-radius:50%;background:#333;transition:background .3s}
+.sdot.ready{background:var(--green)}
+.sdot.listen{background:var(--gold);animation:sdotpulse .8s infinite}
+.sdot.think{background:#a78bfa;animation:sdotpulse 1.2s infinite}
+.sdot.speak{background:var(--blue);animation:sdotpulse 1s infinite}
+@keyframes sdotpulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  #statusText {
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: .5px;
-  }
+/* ── MAIN LAYOUT ── */
+.main{
+  position:relative;z-index:1;
+  flex:1;display:flex;overflow:hidden;
+}
 
-  /* ── Chat ── */
-  #chat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    scroll-behavior: smooth;
-  }
+/* ── FANNY PANEL ── */
+.fanny-panel{
+  width:280px;flex-shrink:0;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding:24px 16px 20px;
+  position:relative;overflow:hidden;
+}
 
-  #chat::-webkit-scrollbar { width: 4px; }
-  #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* stadium arc behind fanny */
+.fanny-panel::before{
+  content:'';position:absolute;
+  bottom:-40px;left:50%;transform:translateX(-50%);
+  width:360px;height:200px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(232,184,75,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
 
-  .msg {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    animation: rise .3s ease;
-    max-width: 85%;
-  }
+/* Fanny face SVG */
+.fanny-face{
+  width:160px;height:160px;
+  position:relative;flex-shrink:0;
+}
 
-  @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+.fanny-face svg{width:100%;height:100%}
 
-  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
-  .msg.fanny { align-self: flex-start; }
+/* mood badge */
+.mood-badge{
+  margin-top:12px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;font-weight:600;letter-spacing:1px;
+  color:var(--gold);text-transform:uppercase;
+  transition:all .4s;
+  text-align:center;
+}
 
-  .av {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 12px;
-    letter-spacing: 1px;
-    flex-shrink: 0;
-  }
+.fanny-name{
+  margin-top:8px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px;letter-spacing:3px;color:var(--text);
+  line-height:1;
+}
+.fanny-title{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
 
-  .av.fanny { background: var(--gold); color: var(--bg); }
-  .av.user  { background: #1e3a5a; color: #7ab4de; }
+/* heat meter */
+.heat-wrap{width:100%;margin-top:16px}
+.heat-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px}
+.heat-bar{height:6px;background:var(--bg3);border-radius:4px;border:1px solid var(--border);overflow:hidden}
+.heat-fill{height:100%;width:30%;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));border-radius:4px;transition:width .8s ease}
 
-  .bubble {
-    padding: 11px 16px;
-    border-radius: 18px;
-    font-size: 14.5px;
-    line-height: 1.6;
-  }
+/* stat pills */
+.fanny-stats{
+  width:100%;margin-top:16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.stat-pill{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;text-align:center;
+}
+.stat-pill .val{font-size:18px;font-weight:700;color:var(--gold);line-height:1}
+.stat-pill .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
-  .msg.fanny .bubble {
-    background: var(--bg-bubble-fanny);
-    border: 1px solid var(--border);
-    border-bottom-left-radius: 4px;
-    color: var(--text-bubble);
-  }
+/* speech bubble from fanny */
+.fanny-quote{
+  width:100%;margin-top:16px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:10px 12px;
+  font-size:12px;font-style:italic;color:var(--muted);
+  line-height:1.5;text-align:center;
+  min-height:52px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;
+}
 
-  .msg.user .bubble {
-    background: var(--bg-bubble-user);
-    border: 1px solid #254a6e;
-    border-bottom-right-radius: 4px;
-    color: var(--text-user-bubble);
-  }
+/* ── CHAT COLUMN ── */
+.chat-col{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
 
-  /* Typing indicator */
-  .typing-bubble {
-    display: flex; align-items: center; gap: 6px;
-    padding: 14px 18px;
-    background: var(--bg-bubble-fanny);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    border-bottom-left-radius: 4px;
-  }
+.chat-feed{
+  flex:1;overflow-y:auto;
+  padding:20px 24px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.chat-feed::-webkit-scrollbar{width:3px}
+.chat-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-  .td {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--gold);
-    animation: bounce 1.2s infinite;
-  }
-  .td:nth-child(2) { animation-delay: .2s; }
-  .td:nth-child(3) { animation-delay: .4s; }
+/* message rows */
+.msg{display:flex;gap:10px;align-items:flex-end;animation:msgrise .3s ease;max-width:82%}
+@keyframes msgrise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.fanny{align-self:flex-start}
 
-  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+.msg-av{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;
+}
+.msg-av.fanny{background:var(--gold);color:var(--bg)}
+.msg-av.user{background:#1e3a5a;color:#60a5fa}
 
-  /* ── Controls ── */
-  .controls {
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    padding: 14px 20px 18px;
-    flex-shrink: 0;
-  }
+.bubble{
+  padding:10px 15px;border-radius:18px;
+  font-size:14.5px;line-height:1.6;
+}
+.msg.fanny .bubble{
+  background:var(--bg3);border:1px solid var(--border);
+  border-bottom-left-radius:4px;color:var(--text);
+}
+.msg.user .bubble{
+  background:#1a3352;border:1px solid #254a6e;
+  border-bottom-right-radius:4px;color:#c8dff0;
+}
 
-  .input-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+/* typing dots */
+.typing-bub{
+  display:flex;align-items:center;gap:5px;
+  padding:14px 16px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;
+}
+.td{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:tdbounce 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tdbounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
 
-  .mic-btn {
-    width: 54px; height: 54px;
-    border-radius: 50%;
-    border: 2px solid var(--gold);
-    background: transparent;
-    color: var(--gold);
-    font-size: 24px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .2s, transform .1s;
-    flex-shrink: 0;
-  }
+/* ── CONTROLS ── */
+.controls{
+  background:var(--panel);border-top:1px solid var(--border);
+  padding:14px 20px 16px;flex-shrink:0;
+  position:relative;z-index:5;
+}
 
-  .mic-btn:hover:not(:disabled) { background: var(--gold-dim); }
-  .mic-btn:active:not(:disabled) { transform: scale(.95); }
+.input-row{display:flex;align-items:center;gap:10px}
 
-  .mic-btn.on {
-    background: var(--gold);
-    color: var(--bg);
-    animation: micring 1s infinite;
-  }
+.mic-btn{
+  width:52px;height:52px;border-radius:50%;
+  border:2px solid var(--gold);background:transparent;
+  color:var(--gold);font-size:22px;
+  cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.mic-btn:hover:not(:disabled){background:rgba(232,184,75,.12)}
+.mic-btn.on{background:var(--gold);color:var(--bg);animation:micglow 1s infinite}
+.mic-btn:disabled{border-color:#2a2a2a;color:#2a2a2a;cursor:not-allowed}
+@keyframes micglow{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.5)}50%{box-shadow:0 0 0 10px rgba(232,184,75,0)}}
 
-  .mic-btn:disabled { border-color: #2a2a2a; color: #2a2a2a; cursor: not-allowed; }
+.transcript-area{
+  flex:1;min-height:52px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:10px 14px;font-size:14px;line-height:1.5;
+  color:var(--muted);font-style:italic;
+  display:flex;align-items:center;word-break:break-word;
+  transition:border-color .2s;
+}
+.transcript-area.live{border-color:rgba(232,184,75,.4);color:var(--text);font-style:normal}
 
-  @keyframes micring {
-    0%,100% { box-shadow: 0 0 0 0 #c8a22755; }
-    50%      { box-shadow: 0 0 0 12px #c8a22700; }
-  }
+.send-btn{
+  height:52px;padding:0 22px;
+  background:var(--gold);border:none;border-radius:12px;
+  color:var(--bg);font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:2px;cursor:pointer;
+  flex-shrink:0;transition:opacity .2s;
+}
+.send-btn:hover:not(:disabled){opacity:.85}
+.send-btn:disabled{opacity:.2;cursor:not-allowed}
 
-  .transcript {
-    flex: 1;
-    min-height: 48px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-dim);
-    font-style: italic;
-    display: flex;
-    align-items: center;
-    cursor: default;
-    word-break: break-word;
-  }
+.hint{font-size:11px;color:#2e3444;text-align:center;margin-top:8px;letter-spacing:.4px}
+.err-box{
+  background:#1a0808;border:1px solid #4a1515;border-radius:8px;
+  padding:7px 12px;font-size:12px;color:#e06060;margin-top:8px;display:none;
+}
 
-  .transcript.live {
-    border-color: #c8a22755;
-    color: var(--text);
-    font-style: normal;
-  }
+/* ── AUDIO WAVE ── */
+.wave-wrap{
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  height:20px;margin-top:2px;
+}
+.wave-bar{
+  width:3px;border-radius:2px;background:var(--blue);
+  animation:wavebar 1s infinite ease-in-out;
+  transform-origin:bottom;
+}
+.wave-bar:nth-child(1){height:4px;animation-delay:0s}
+.wave-bar:nth-child(2){height:12px;animation-delay:.1s}
+.wave-bar:nth-child(3){height:18px;animation-delay:.2s}
+.wave-bar:nth-child(4){height:12px;animation-delay:.3s}
+.wave-bar:nth-child(5){height:4px;animation-delay:.4s}
+@keyframes wavebar{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
 
-  .send-btn {
-    height: 48px;
-    padding: 0 22px;
-    background: var(--gold);
-    border: none;
-    border-radius: 12px;
-    color: var(--bg);
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: opacity .2s, transform .1s;
-    flex-shrink: 0;
-  }
+/* hide wave when not speaking */
+.wave-wrap{opacity:0;transition:opacity .3s}
+.wave-wrap.active{opacity:1}
 
-  .send-btn:hover:not(:disabled) { opacity: .88; }
-  .send-btn:active:not(:disabled) { transform: scale(.97); }
-  .send-btn:disabled { opacity: .25; cursor: not-allowed; }
-
-  .hint {
-    font-size: 11.5px;
-    color: #3a4a5a;
-    text-align: center;
-    margin-top: 10px;
-    letter-spacing: .4px;
-  }
-
-  .error {
-    background: #1e0a0a;
-    border: 1px solid #5a1e1e;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 12.5px;
-    color: #e06060;
-    margin-top: 10px;
-    display: none;
-  }
-
-  /* ── Responsive ── */
-  @media (max-width: 480px) {
-    header { padding: 8px 14px; gap: 10px; }
-    .logo-text h1 { font-size: 22px; }
-    #chat { padding: 12px 12px; }
-    .controls { padding: 10px 12px 14px; }
-    .msg { max-width: 92%; }
-    .send-btn { padding: 0 14px; font-size: 16px; }
-  }
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .fanny-panel{display:none}
+  .chat-feed{padding:14px}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-ball">⚽</div>
-  <div class="logo-text">
-    <h1>Fanny</h1>
-    <p>Football Fan Debater · World Cup 2026</p>
+  <span class="logo">Fanny</span>
+  <div class="logo-sep"></div>
+  <div class="logo-sub">
+    <strong>Football Fan Debater</strong>
+    World Cup 2026
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="sdot" id="sdot"></div>
+      <span id="statusTx">Starting…</span>
+    </div>
   </div>
 </header>
 
-<div class="status-bar">
-  <div class="dot" id="dot"></div>
-  <span id="statusText">Starting up…</span>
+<div class="main">
+
+  <!-- FANNY SIDEBAR -->
+  <div class="fanny-panel" id="fannyPanel">
+
+    <!-- SVG Face — animated expressions -->
+    <div class="fanny-face">
+      <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" id="fannyFace">
+        <!-- head -->
+        <circle cx="80" cy="82" r="58" fill="#d4956a"/>
+        <!-- hair -->
+        <ellipse cx="80" cy="30" rx="52" ry="22" fill="#2a1a0e"/>
+        <ellipse cx="38" cy="54" rx="16" ry="28" fill="#2a1a0e"/>
+        <ellipse cx="122" cy="54" rx="16" ry="28" fill="#2a1a0e"/>
+        <!-- ears -->
+        <ellipse cx="22" cy="84" rx="9" ry="12" fill="#c4855a"/>
+        <ellipse cx="138" cy="84" rx="9" ry="12" fill="#c4855a"/>
+        <!-- neck -->
+        <rect x="65" y="132" width="30" height="20" rx="6" fill="#d4956a"/>
+        <!-- shirt collar -->
+        <path d="M40 152 Q80 144 120 152 L130 160 L30 160 Z" fill="#e8b84b"/>
+        <!-- eyes group — animated via JS -->
+        <g id="eyesGroup">
+          <!-- left eye -->
+          <ellipse id="leye" cx="60" cy="80" rx="10" ry="11" fill="white"/>
+          <circle id="lpupil" cx="61" cy="81" r="6" fill="#1a0a00"/>
+          <circle cx="63" cy="78" r="2" fill="white"/>
+          <!-- right eye -->
+          <ellipse id="reye" cx="100" cy="80" rx="10" ry="11" fill="white"/>
+          <circle id="rpupil" cx="101" cy="81" r="6" fill="#1a0a00"/>
+          <circle cx="103" cy="78" r="2" fill="white"/>
+        </g>
+        <!-- eyebrows -->
+        <path id="lbrow" d="M48 66 Q60 61 72 64" stroke="#2a1a0e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path id="rbrow" d="M88 64 Q100 61 112 66" stroke="#2a1a0e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <!-- nose -->
+        <ellipse cx="80" cy="96" rx="6" ry="4" fill="#c4855a"/>
+        <!-- mouth -->
+        <path id="mouth" d="M62 112 Q80 124 98 112" stroke="#8b3a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- cheeks -->
+        <ellipse id="lcheck" cx="45" cy="102" rx="12" ry="8" fill="rgba(220,80,80,.25)" opacity="0"/>
+        <ellipse id="rcheck" cx="115" cy="102" rx="12" ry="8" fill="rgba(220,80,80,.25)" opacity="0"/>
+        <!-- scarf -->
+        <path d="M30 148 Q80 138 130 148" stroke="#e8b84b" stroke-width="8" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="mood-badge" id="moodBadge">Waiting…</div>
+    <div class="fanny-name">Fanny</div>
+    <div class="fanny-title">World Cup Debater</div>
+
+    <!-- wave while speaking -->
+    <div class="wave-wrap" id="waveWrap">
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+
+    <!-- debate heat -->
+    <div class="heat-wrap">
+      <div class="heat-label"><span>Debate heat</span><span id="heatPct">30%</span></div>
+      <div class="heat-bar"><div class="heat-fill" id="heatFill"></div></div>
+    </div>
+
+    <!-- stats -->
+    <div class="fanny-stats">
+      <div class="stat-pill"><div class="val" id="statRounds">0</div><div class="lbl">Rounds</div></div>
+      <div class="stat-pill"><div class="val" id="statTeam">—</div><div class="lbl">Your team</div></div>
+    </div>
+
+    <!-- fanny's live quote teaser -->
+    <div class="fanny-quote" id="fannyQuote">Waiting for you to pull up a stool…</div>
+
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-col">
+    <div class="chat-feed" id="chatFeed" role="log" aria-live="polite"></div>
+  </div>
+
 </div>
 
-<div id="chat" role="log" aria-live="polite" aria-label="Debate conversation"></div>
-
+<!-- CONTROLS -->
 <div class="controls">
   <div class="input-row">
     <button class="mic-btn" id="micBtn" aria-label="Toggle microphone" disabled>
-      <i class="ti ti-microphone" aria-hidden="true"></i>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" x2="12" y1="19" y2="22"/>
+      </svg>
     </button>
-    <div class="transcript" id="transcript" aria-live="polite">
-      <span id="transcriptText">Press the mic and start talking…</span>
-    </div>
-    <button class="send-btn" id="sendBtn" disabled aria-label="Send message">SEND</button>
+    <div class="transcript-area" id="trArea"><span id="trText">Press the mic and start talking…</span></div>
+    <button class="send-btn" id="sendBtn" disabled>SEND</button>
   </div>
-  <div class="error" id="errorBox"></div>
-  <p class="hint" id="hint">🎙️ Tap the mic · speak · tap again · then SEND</p>
+  <div class="err-box" id="errBox"></div>
+  <p class="hint" id="hintTx">Tap mic · speak · tap again · SEND</p>
 </div>
 
 <script>
-const SYSTEM = `You are Fanny — a brilliantly passionate, loud, funny and opinionated football fan AI. You're in a pub debate about World Cup 2026. You're informal, sharp, occasionally winding people up, and you love a good argument.
+const SYSTEM = `You are Fanny — a brilliantly passionate, loud, funny and opinionated football fan AI. You're in a pub debate about World Cup 2026. You're informal, sharp, wind people up, and love a good argument.
 
 Your personality:
 - Warm but feisty. Big laughs. Don't back down.
 - Pub-chat language: "mate", "look", "right", "come on", "honestly", "tell you what", "you're having a laugh", "absolutely no chance", "dark horse this", etc.
 - STRONG opinions on every national team — squads, managers, tactics, chances, history, key players, weak spots.
-- World Cup 2026 knowledge: hosted by USA, Canada & Mexico. First 48-team tournament. Groups of 3 teams, top 2 go through. Favourites include Brazil, France, England, Argentina (defending champions), Spain, Germany.
-- You know current football: star players like Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Lewandowski, Haaland (Norway — not qualified, which is a talking point), Messi (retired from internationals now), Salah, etc.
-- Never neutral. Always have a hot take.
-- Punchy replies — 2 to 4 sentences max. Like a real pub chat.
-- React naturally to what they say. Tease gently if their team is iffy. Get genuinely excited if they've picked a good side.
-- Occasionally ask them a follow-up question to keep the debate going — "Who do you reckon their best player is?", "Do you think they'll even get out the group?", "What's your prediction for the final?"
-- NO bullet points. NO lists. Just talk.`;
+- World Cup 2026 knowledge: hosted by USA, Canada and Mexico. First 48-team tournament. Groups of 3. Favourites: Brazil, France, England, Argentina (defending champions), Spain, Germany.
+- Current football: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Lewandowski, Salah, etc.
+- Never neutral. Always hot takes.
+- Punchy replies — 2 to 4 sentences max. Like real pub chat.
+- React naturally. Tease if their team is iffy. Get excited for a good side.
+- Occasionally ask follow-up questions: "Who's your striker then?", "Do you reckon they'll get out the group?", "What's your prediction for the final?"
+- NO bullet points. NO lists. Just talk.
 
-let history = [];
-let transcript = '';
-let isListening = false;
-let isSpeaking = false;
-let recognition = null;
+IMPORTANT: At the end of each reply, on a new line, add a JSON tag like this (hidden from display):
+[MOOD:excited] or [MOOD:sceptical] or [MOOD:laughing] or [MOOD:furious] or [MOOD:thinking] or [MOOD:impressed]
+Also add [TEAM:England] (or whatever team the user mentions) if a team is mentioned for the first time.`;
 
-const chat     = document.getElementById('chat');
-const dot      = document.getElementById('dot');
-const statusTx = document.getElementById('statusText');
-const micBtn   = document.getElementById('micBtn');
-const sendBtn  = document.getElementById('sendBtn');
-const trBox    = document.getElementById('transcript');
-const trText   = document.getElementById('transcriptText');
-const errorBox = document.getElementById('errorBox');
-const hint     = document.getElementById('hint');
+let history = [], transcript = '', isListening = false, isSpeaking = false, recognition = null;
+let debateRounds = 0, currentTeam = '—', currentHeat = 30;
+let currentAudio = null;
 
-/* ── Utilities ── */
-function setStatus(state, text) {
-  dot.className = 'dot' + (state ? ' ' + state : '');
-  statusTx.textContent = text;
+const feed = document.getElementById('chatFeed');
+const sdot = document.getElementById('sdot');
+const statusTx = document.getElementById('statusTx');
+const micBtn = document.getElementById('micBtn');
+const sendBtn = document.getElementById('sendBtn');
+const trArea = document.getElementById('trArea');
+const trText = document.getElementById('trText');
+const errBox = document.getElementById('errBox');
+const hintTx = document.getElementById('hintTx');
+const moodBadge = document.getElementById('moodBadge');
+const heatFill = document.getElementById('heatFill');
+const heatPct = document.getElementById('heatPct');
+const statRounds = document.getElementById('statRounds');
+const statTeam = document.getElementById('statTeam');
+const fannyQuote = document.getElementById('fannyQuote');
+const waveWrap = document.getElementById('waveWrap');
+
+// Face elements
+const mouth = document.getElementById('mouth');
+const lbrow = document.getElementById('lbrow');
+const rbrow = document.getElementById('rbrow');
+const lpupil = document.getElementById('lpupil');
+const rpupil = document.getElementById('rpupil');
+const lcheck = document.getElementById('lcheck');
+const rcheck = document.getElementById('rcheck');
+
+function setStatus(state, text){
+  sdot.className='sdot'+(state?' '+state:'');
+  statusTx.textContent=text;
 }
 
-function showError(msg) {
-  errorBox.textContent = msg;
-  errorBox.style.display = 'block';
-  setTimeout(() => errorBox.style.display = 'none', 6000);
+function showErr(msg){errBox.textContent=msg;errBox.style.display='block';setTimeout(()=>errBox.style.display='none',6000)}
+
+function scrollBottom(){feed.scrollTop=feed.scrollHeight}
+
+// ── FACE MOODS ──
+const MOODS = {
+  excited:{
+    mouth:'M58 110 Q80 130 102 110',
+    lbrow:'M48 64 Q60 58 72 62',rbrow:'M88 62 Q100 58 112 64',
+    cheeks:.6,badge:'Buzzing!',badgeColor:'#22c55e'
+  },
+  sceptical:{
+    mouth:'M62 116 Q80 112 98 116',
+    lbrow:'M48 68 Q60 65 72 70',rbrow:'M88 66 Q100 68 112 72',
+    cheeks:0,badge:'Really though?',badgeColor:'#f59e0b'
+  },
+  laughing:{
+    mouth:'M55 108 Q80 132 105 108',
+    lbrow:'M48 63 Q60 57 72 61',rbrow:'M88 61 Q100 57 112 63',
+    cheeks:.8,badge:'Ha!',badgeColor:'#e8b84b'
+  },
+  furious:{
+    mouth:'M62 118 Q80 110 98 118',
+    lbrow:'M48 70 Q60 63 72 67',rbrow:'M88 67 Q100 63 112 70',
+    cheeks:.15,badge:'Outrageous!',badgeColor:'#ef4444'
+  },
+  thinking:{
+    mouth:'M65 115 Q80 118 95 114',
+    lbrow:'M48 67 Q60 63 72 65',rbrow:'M88 62 Q100 65 112 69',
+    cheeks:0,badge:'Hmm…',badgeColor:'#a78bfa'
+  },
+  impressed:{
+    mouth:'M60 111 Q80 126 100 111',
+    lbrow:'M48 65 Q60 59 72 63',rbrow:'M88 63 Q100 59 112 65',
+    cheeks:.4,badge:'Fair play!',badgeColor:'#60a5fa'
+  },
+  idle:{
+    mouth:'M62 112 Q80 124 98 112',
+    lbrow:'M48 66 Q60 61 72 64',rbrow:'M88 64 Q100 61 112 66',
+    cheeks:0,badge:'Ready…',badgeColor:'#6b7280'
+  }
+};
+
+function setMood(mood){
+  const m = MOODS[mood]||MOODS.idle;
+  mouth.setAttribute('d',m.mouth);
+  lbrow.setAttribute('d',m.lbrow);
+  rbrow.setAttribute('d',m.rbrow);
+  lcheck.setAttribute('opacity',m.cheeks);
+  rcheck.setAttribute('opacity',m.cheeks);
+  moodBadge.textContent=m.badge;
+  moodBadge.style.color=m.badgeColor;
+  moodBadge.style.borderColor=m.badgeColor+'44';
 }
 
-function scrollBottom() {
-  chat.scrollTop = chat.scrollHeight;
+// eye blink
+function blink(){
+  const leye=document.getElementById('leye');
+  const reye=document.getElementById('reye');
+  leye.setAttribute('ry','1');reye.setAttribute('ry','1');
+  setTimeout(()=>{leye.setAttribute('ry','11');reye.setAttribute('ry','11')},120);
+}
+setInterval(blink,3800+Math.random()*2000);
+
+// ── PARSE MOOD FROM REPLY ──
+function parseReply(raw){
+  let mood='idle', team=null;
+  const moodMatch=raw.match(/\[MOOD:(\w+)\]/);
+  const teamMatch=raw.match(/\[TEAM:([^\]]+)\]/);
+  if(moodMatch) mood=moodMatch[1].toLowerCase();
+  if(teamMatch) team=teamMatch[1];
+  const clean=raw.replace(/\[MOOD:[^\]]+\]/g,'').replace(/\[TEAM:[^\]]+\]/g,'').trim();
+  return{clean,mood,team};
 }
 
-/* ── Message rendering ── */
-function addMsg(role, text) {
-  const wrap = document.createElement('div');
-  wrap.className = `msg ${role}`;
+function updateStats(team){
+  debateRounds++;
+  statRounds.textContent=debateRounds;
+  if(team&&team!=='—'){currentTeam=team;statTeam.textContent=team.slice(0,6)}
+  currentHeat=Math.min(98,currentHeat+(6+Math.random()*8));
+  heatFill.style.width=currentHeat+'%';
+  heatPct.textContent=Math.round(currentHeat)+'%';
+}
 
-  const av = document.createElement('div');
-  av.className = `av ${role}`;
-  av.textContent = role === 'fanny' ? 'FAN' : 'YOU';
-  av.setAttribute('aria-hidden', 'true');
-
-  const bub = document.createElement('div');
-  bub.className = 'bubble';
-  bub.textContent = text;
-
-  wrap.appendChild(av);
-  wrap.appendChild(bub);
-  chat.appendChild(wrap);
-  scrollBottom();
+// ── MESSAGES ──
+function addMsg(role,text){
+  const wrap=document.createElement('div');wrap.className=`msg ${role}`;
+  const av=document.createElement('div');av.className=`msg-av ${role}`;
+  av.textContent=role==='fanny'?'FAN':'YOU';
+  const bub=document.createElement('div');bub.className='bubble';bub.textContent=text;
+  wrap.appendChild(av);wrap.appendChild(bub);
+  feed.appendChild(wrap);scrollBottom();
+  // update side quote with last fanny message
+  if(role==='fanny') fannyQuote.textContent='"'+text.slice(0,80)+(text.length>80?'…':'')+'"';
   return wrap;
 }
 
-function addTyping() {
-  const wrap = document.createElement('div');
-  wrap.className = 'msg fanny';
-  wrap.id = 'typing';
-
-  const av = document.createElement('div');
-  av.className = 'av fanny';
-  av.textContent = 'FAN';
-  av.setAttribute('aria-hidden', 'true');
-
-  const bub = document.createElement('div');
-  bub.className = 'typing-bubble';
-  bub.innerHTML = '<div class="td"></div><div class="td"></div><div class="td"></div>';
-
-  wrap.appendChild(av);
-  wrap.appendChild(bub);
-  chat.appendChild(wrap);
-  scrollBottom();
+function addTyping(){
+  const wrap=document.createElement('div');wrap.className='msg fanny';wrap.id='typing';
+  const av=document.createElement('div');av.className='msg-av fanny';av.textContent='FAN';
+  const bub=document.createElement('div');bub.className='typing-bub';
+  bub.innerHTML='<div class="td"></div><div class="td"></div><div class="td"></div>';
+  wrap.appendChild(av);wrap.appendChild(bub);feed.appendChild(wrap);scrollBottom();
 }
+function removeTyping(){const el=document.getElementById('typing');if(el)el.remove()}
 
-function removeTyping() {
-  const el = document.getElementById('typing');
-  if (el) el.remove();
-}
+// ── ELEVENLABS TTS ──
+async function speak(text){
+  if(currentAudio){currentAudio.pause();currentAudio=null}
+  isSpeaking=true;
+  setStatus('speak','Fanny is talking…');
+  micBtn.disabled=true;
+  waveWrap.classList.add('active');
 
-/* ── Speech synthesis — ElevenLabs ── */
-let currentAudio = null;
-
-async function speak(text) {
-  // Stop anything currently playing
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-
-  isSpeaking = true;
-  setStatus('speak', 'Fanny is talking…');
-  micBtn.disabled = true;
-
-  try {
-    const res = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+  try{
+    const res=await fetch('/api/speak',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text})
     });
-
-    if (!res.ok) throw new Error('TTS fetch failed: ' + res.status);
-
-    const data = await res.json();
-    if (!data.audio) throw new Error('No audio returned');
-
-    // Decode base64 → Blob → Object URL → play
-    const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: 'audio/mpeg' });
-    const url = URL.createObjectURL(blob);
-
-    const audio = new Audio(url);
-    currentAudio = audio;
-
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      currentAudio = null;
-      isSpeaking = false;
-      micBtn.disabled = false;
-      setStatus('ready', 'Your turn');
-      hint.textContent = '🎙️ Tap the mic · speak · tap again · then SEND';
+    if(!res.ok) throw new Error('TTS '+res.status);
+    const data=await res.json();
+    if(!data.audio) throw new Error('no audio');
+    const bytes=Uint8Array.from(atob(data.audio),c=>c.charCodeAt(0));
+    const blob=new Blob([bytes],{type:'audio/mpeg'});
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);
+    currentAudio=audio;
+    audio.onended=audio.onerror=()=>{
+      URL.revokeObjectURL(url);currentAudio=null;
+      isSpeaking=false;micBtn.disabled=false;
+      waveWrap.classList.remove('active');
+      setStatus('ready','Your turn');
+      hintTx.textContent='Tap mic · speak · tap again · SEND';
     };
-
-    audio.onerror = () => {
-      console.warn('Audio playback error, falling back to browser TTS');
-      fallbackSpeak(text);
-    };
-
     await audio.play();
-
-  } catch (err) {
-    console.warn('ElevenLabs TTS failed, falling back:', err);
+  }catch(e){
+    console.warn('ElevenLabs TTS failed, using browser TTS',e);
     fallbackSpeak(text);
   }
 }
 
-function fallbackSpeak(text) {
-  const synth = window.speechSynthesis;
-  synth.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 1.05; utt.pitch = 1.1;
-  const voices = synth.getVoices();
-  const pick = voices.find(v => v.lang.startsWith('en-GB')) || voices.find(v => v.lang.startsWith('en'));
-  if (pick) utt.voice = pick;
-  utt.onend = utt.onerror = () => {
-    isSpeaking = false;
-    micBtn.disabled = false;
-    setStatus('ready', 'Your turn');
-    hint.textContent = '🎙️ Tap the mic · speak · tap again · then SEND';
+function fallbackSpeak(text){
+  const s=window.speechSynthesis;s.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.rate=1.05;u.pitch=1.1;
+  const v=s.getVoices();
+  const pick=v.find(x=>x.lang.startsWith('en-GB'))||v.find(x=>x.lang.startsWith('en'));
+  if(pick)u.voice=pick;
+  u.onend=u.onerror=()=>{
+    isSpeaking=false;micBtn.disabled=false;
+    waveWrap.classList.remove('active');
+    setStatus('ready','Your turn');
   };
-  synth.speak(utt);
+  s.speak(u);
 }
 
-/* ── Claude API ── */
-async function askFanny(userMsg) {
-  history.push({ role: 'user', content: userMsg });
-  addTyping();
-  setStatus('think', 'Fanny is thinking…');
-  micBtn.disabled = true;
-  sendBtn.disabled = true;
+// ── CLAUDE API ──
+async function askFanny(userMsg){
+  history.push({role:'user',content:userMsg});
+  addTyping();setStatus('think','Fanny is thinking…');
+  setMood('thinking');
+  micBtn.disabled=true;sendBtn.disabled=true;
 
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: SYSTEM, messages: history }),
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:SYSTEM,messages:history})
     });
-
-    const data = await res.json();
-
-    if (!res.ok || data.error) {
-      throw new Error(data.error?.message || data.error || 'API error');
-    }
-
-    const reply = data.content?.map(b => b.text || '').join('').trim()
-      || "Oi, I lost my train of thought — go on, say that again!";
-
-    history.push({ role: 'assistant', content: reply });
+    const data=await res.json();
+    if(!res.ok||data.error) throw new Error(data.error?.message||'API error');
+    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Oi, say that again — lost you there!";
+    const{clean,mood,team}=parseReply(raw);
+    history.push({role:'assistant',content:raw});
     removeTyping();
-    addMsg('fanny', reply);
-    speak(reply);
-
-  } catch (err) {
-    removeTyping();
-    showError('Something went wrong: ' + err.message);
-    setStatus('ready', 'Ready');
-    micBtn.disabled = false;
-    console.error(err);
+    addMsg('fanny',clean);
+    setMood(mood);
+    updateStats(team);
+    speak(clean);
+  }catch(e){
+    removeTyping();showErr('Something went wrong: '+e.message);
+    setStatus('ready','Ready');micBtn.disabled=false;console.error(e);
   }
 }
 
-/* ── Speech recognition ── */
-function initRecognition() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    showError('Voice not supported in this browser. Use Chrome or Edge.');
-    micBtn.disabled = true;
-    hint.textContent = '⚠️ No voice support detected — try Chrome or Edge';
-    return;
-  }
-
-  recognition = new SR();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-GB';
-
-  recognition.onresult = (e) => {
-    let interim = '';
-    let final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+// ── SPEECH RECOGNITION ──
+function initRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showErr('Voice not supported — use Chrome or Edge');micBtn.disabled=true;return}
+  recognition=new SR();
+  recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-GB';
+  recognition.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
     }
-    transcript = (transcript + final).trim();
-    const live = transcript + (interim ? (transcript ? ' ' : '') + interim : '');
-    trText.textContent = live || 'Listening…';
-    trBox.classList.toggle('live', !!live);
-    sendBtn.disabled = !transcript;
+    transcript=(transcript+final).trim();
+    const live=transcript+(interim?(transcript?' ':'')+interim:'');
+    trText.textContent=live||'Listening…';
+    trArea.classList.toggle('live',!!live);
+    sendBtn.disabled=!transcript;
   };
-
-  recognition.onerror = (e) => {
-    if (e.error === 'not-allowed') {
-      showError('Microphone access denied. Allow mic access in your browser and refresh.');
-    } else if (e.error !== 'aborted' && e.error !== 'no-speech') {
-      showError('Mic error: ' + e.error);
-    }
+  recognition.onerror=e=>{
+    if(e.error==='not-allowed')showErr('Microphone denied — allow access and refresh');
+    else if(e.error!=='aborted'&&e.error!=='no-speech')showErr('Mic error: '+e.error);
     stopListening();
   };
-
-  recognition.onend = () => {
-    if (isListening) {
-      try { recognition.start(); } catch (_) {}
-    }
-  };
-
-  micBtn.disabled = false;
+  recognition.onend=()=>{if(isListening)try{recognition.start()}catch(_){}};
+  micBtn.disabled=false;
 }
 
-function startListening() {
-  if (isSpeaking) synth.cancel();
-  transcript = '';
-  trText.textContent = 'Listening…';
-  trBox.classList.remove('live');
-  isListening = true;
+function startListening(){
+  if(isSpeaking){if(currentAudio){currentAudio.pause();currentAudio=null}window.speechSynthesis?.cancel()}
+  transcript='';trText.textContent='Listening…';trArea.classList.remove('live');
+  isListening=true;
   micBtn.classList.add('on');
-  micBtn.innerHTML = '<i class="ti ti-microphone-off" aria-hidden="true"></i>';
-  micBtn.setAttribute('aria-label', 'Stop recording');
-  sendBtn.disabled = true;
-  setStatus('listen', 'Listening…');
-  hint.textContent = '🔴 Recording — tap mic again to stop';
-  try { recognition.start(); } catch (_) {}
+  micBtn.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V5a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" x2="12" y1="19" y2="22"/></svg>`;
+  sendBtn.disabled=true;setStatus('listen','Listening…');
+  hintTx.textContent='Recording… tap mic to stop';
+  try{recognition.start()}catch(_){}
 }
 
-function stopListening() {
-  isListening = false;
+function stopListening(){
+  isListening=false;
   micBtn.classList.remove('on');
-  micBtn.innerHTML = '<i class="ti ti-microphone" aria-hidden="true"></i>';
-  micBtn.setAttribute('aria-label', 'Start recording');
-  try { recognition.stop(); } catch (_) {}
-  setStatus('ready', 'Ready');
-
-  if (transcript.trim()) {
-    sendBtn.disabled = false;
-    hint.textContent = '✅ Tap SEND to argue back at Fanny';
-  } else {
-    trText.textContent = 'Press the mic and start talking…';
-    trBox.classList.remove('live');
-    hint.textContent = '🎙️ Tap the mic · speak · tap again · then SEND';
-  }
+  micBtn.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>`;
+  try{recognition.stop()}catch(_){}
+  setStatus('ready','Ready');
+  if(transcript.trim()){sendBtn.disabled=false;hintTx.textContent='Tap SEND to fire back at Fanny'}
+  else{trText.textContent='Press the mic and start talking…';trArea.classList.remove('live');hintTx.textContent='Tap mic · speak · tap again · SEND'}
 }
 
-micBtn.addEventListener('click', () => {
-  if (micBtn.disabled) return;
-  if (isListening) stopListening();
-  else startListening();
+micBtn.addEventListener('click',()=>{
+  if(micBtn.disabled)return;
+  if(isListening)stopListening();else startListening();
 });
 
-sendBtn.addEventListener('click', () => {
-  const msg = transcript.trim();
-  if (!msg) return;
-  addMsg('user', msg);
-  trText.textContent = 'Press the mic and start talking…';
-  trBox.classList.remove('live');
-  transcript = '';
-  sendBtn.disabled = true;
-  hint.textContent = '⏳ Fanny is cooking up a response…';
+sendBtn.addEventListener('click',()=>{
+  const msg=transcript.trim();if(!msg)return;
+  addMsg('user',msg);
+  trText.textContent='Press the mic and start talking…';
+  trArea.classList.remove('live');
+  transcript='';sendBtn.disabled=true;
+  hintTx.textContent='Fanny is loading up her response…';
   askFanny(msg);
 });
 
-/* ── Boot ── */
-async function boot() {
-  setStatus('', 'Starting up…');
-  addTyping();
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: SYSTEM,
-        messages: [{ role: 'user', content: "Start the debate. Greet me like we're in a pub, introduce yourself briefly as Fanny, then ask me what country I'm supporting this summer. Keep it short and punchy." }]
-      }),
+// ── BOOT ──
+async function boot(){
+  setStatus('','Starting up…');setMood('idle');addTyping();
+  try{
+    const res=await fetch('/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Start the debate. Say hi like we're in a pub, introduce yourself very briefly as Fanny, then ask what country I'm supporting this summer. Keep it punchy — 2 sentences max."}]})
     });
-    const data = await res.json();
-    const reply = data.content?.map(b => b.text || '').join('').trim()
-      || "Right then! Pull up a stool — I'm Fanny, and I've got opinions. So go on… what country are you backing this summer?";
-
-    history.push({ role: 'assistant', content: reply });
-    removeTyping();
-    addMsg('fanny', reply);
-    setStatus('ready', 'Ready');
-    initRecognition();
-    speak(reply);
-
-  } catch (err) {
-    removeTyping();
-    const fallback = "Right then! Pull up a stool — I'm Fanny, and I've got opinions. So go on… what country are you backing this summer?";
-    history.push({ role: 'assistant', content: fallback });
-    addMsg('fanny', fallback);
-    setStatus('ready', 'Ready');
-    initRecognition();
-    speak(fallback);
-    console.warn('Boot fetch failed, using fallback:', err);
+    const data=await res.json();
+    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Right then — pull up a stool! I'm Fanny, and I've got opinions. So go on… what country are you backing this summer?";
+    const{clean,mood}=parseReply(raw);
+    history.push({role:'assistant',content:raw});
+    removeTyping();addMsg('fanny',clean);
+    setMood(mood||'excited');setStatus('ready','Ready');
+    initRecognition();speak(clean);
+  }catch(e){
+    const fallback="Right then — pull up a stool! I'm Fanny, and I've got opinions. So go on… what country are you backing this summer?";
+    history.push({role:'assistant',content:fallback});
+    removeTyping();addMsg('fanny',fallback);
+    setMood('excited');setStatus('ready','Ready');
+    initRecognition();speak(fallback);
   }
 }
 
-setTimeout(boot, 300);
+setTimeout(boot,300);
 </script>
 </body>
 </html>
