@@ -1,7 +1,7 @@
 // ElevenLabs TTS proxy — keeps API key server-side
-// Voice: Rachel (21m00Tcm4TlvDq8ikWAM) — warm, confident, natural
+// Voice: Rachel (EQx6HGDYjkDpcli6vorJ) — warm, confident, natural
 
-const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel
+const VOICE_ID = "EQx6HGDYjkDpcli6vorJ"; // Lizzie - Cockney Character
 
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
@@ -39,11 +39,11 @@ exports.handler = async function (event) {
         },
         body: JSON.stringify({
           text: text.slice(0, 1000), // safety cap
-          model_id: "eleven_turbo_v2_5",
+          model_id: "eleven_multilingual_v2",
           voice_settings: {
-            stability: 0.45,
-            similarity_boost: 0.82,
-            style: 0.35,
+            stability: 0.35,
+            similarity_boost: 0.75,
+            style: 0.55,
             use_speaker_boost: true,
           },
         }),
