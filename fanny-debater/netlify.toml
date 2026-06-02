@@ -1,5 +1,4 @@
 [build]
-  base = "fanny-debater"
   publish = "public"
   functions = "netlify/functions"
 
