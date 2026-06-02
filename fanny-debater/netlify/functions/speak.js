@@ -1,6 +1,3 @@
-// ElevenLabs TTS proxy — keeps API key server-side
-// Voice: Rachel (EQx6HGDYjkDpcli6vorJ) — warm, confident, natural
-
 const VOICE_ID = "EQx6HGDYjkDpcli6vorJ"; // Lizzie - Cockney Character
 
 exports.handler = async function (event) {
@@ -12,7 +9,7 @@ exports.handler = async function (event) {
   if (!ELEVENLABS_API_KEY) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "ElevenLabs API key not configured" }),
+      body: JSON.stringify({ error: "ELEVENLABS_API_KEY not set in environment" }),
     };
   }
 
@@ -28,6 +25,8 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: JSON.stringify({ error: "Missing text" }) };
   }
 
+  console.log(`Speaking with voice ${VOICE_ID}, text length: ${text.length}`);
+
   try {
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
@@ -38,7 +37,7 @@ exports.handler = async function (event) {
           "xi-api-key": ELEVENLABS_API_KEY,
         },
         body: JSON.stringify({
-          text: text.slice(0, 1000), // safety cap
+          text: text.slice(0, 1000),
           model_id: "eleven_multilingual_v2",
           voice_settings: {
             stability: 0.35,
@@ -50,17 +49,21 @@ exports.handler = async function (event) {
       }
     );
 
+    console.log(`ElevenLabs response status: ${response.status}`);
+
     if (!response.ok) {
       const err = await response.text();
+      console.error(`ElevenLabs error: ${err}`);
       return {
         statusCode: response.status,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
         body: JSON.stringify({ error: err }),
       };
     }
 
-    // Stream back as base64 so the browser can play it directly
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
+    console.log(`Audio returned, base64 length: ${base64.length}`);
 
     return {
       statusCode: 200,
@@ -71,6 +74,7 @@ exports.handler = async function (event) {
       body: JSON.stringify({ audio: base64 }),
     };
   } catch (err) {
+    console.error(`speak.js exception: ${err.message}`);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
