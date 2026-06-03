@@ -7,18 +7,12 @@ exports.handler = async function (event) {
 
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   if (!ELEVENLABS_API_KEY) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }) };
   }
 
   let body;
-  try {
-    body = JSON.parse(event.body);
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON" }) };
-  }
+  try { body = JSON.parse(event.body); }
+  catch { return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON" }) }; }
 
   const { text } = body;
   if (!text || typeof text !== "string") {
@@ -27,7 +21,7 @@ exports.handler = async function (event) {
 
   try {
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,
       {
         method: "POST",
         headers: {
@@ -35,14 +29,15 @@ exports.handler = async function (event) {
           "xi-api-key": ELEVENLABS_API_KEY,
         },
         body: JSON.stringify({
-          text: text.slice(0, 1000),
+          text: text.slice(0, 500),
           model_id: "eleven_turbo_v2_5",
           voice_settings: {
-            stability: 0.35,
+            stability: 0.4,
             similarity_boost: 0.75,
-            style: 0.55,
+            style: 0.45,
             use_speaker_boost: true,
           },
+          optimize_streaming_latency: 4,
         }),
       }
     );
@@ -68,9 +63,6 @@ exports.handler = async function (event) {
       body: JSON.stringify({ audio: base64 }),
     };
   } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
