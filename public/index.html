@@ -641,15 +641,26 @@ const waveCanvas=document.getElementById('waveCanvas');
 const waveCtx=waveCanvas.getContext('2d');
 
 function startWaveform(audioEl){
-  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(analyser){analyser.disconnect();analyser=null;}
-  analyser=audioCtx.createAnalyser();
-  analyser.fftSize=128;
-  const src=audioCtx.createMediaElementSource(audioEl);
-  src.connect(analyser);
-  analyser.connect(audioCtx.destination);
-  waveCanvas.classList.add('active');
-  drawWave();
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    if(!audioEl._srcNode){
+      const src=audioCtx.createMediaElementSource(audioEl);
+      audioEl._srcNode=src;
+    }
+    if(analyser){analyser.disconnect();}
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=256;
+    analyser.smoothingTimeConstant=0.8;
+    audioEl._srcNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    waveCanvas.classList.add('active');
+    drawWave();
+  }catch(e){
+    console.warn('Waveform error:',e);
+    waveCanvas.classList.add('active');
+    drawFakeWave();
+  }
 }
 
 function stopWaveform(){
@@ -658,23 +669,49 @@ function stopWaveform(){
   waveCtx.clearRect(0,0,120,32);
 }
 
+function drawBar(x,y,w,h){
+  waveCtx.beginPath();
+  waveCtx.rect(x,y,w,h);
+  waveCtx.fill();
+}
+
 function drawWave(){
   waveAnimId=requestAnimationFrame(drawWave);
   const buf=new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(buf);
   waveCtx.clearRect(0,0,120,32);
-  const bars=28, bw=2, gap=2, total=bars*(bw+gap);
+  const bars=30, bw=2, gap=1.5;
+  const total=bars*(bw+gap);
   const ox=(120-total)/2;
   const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
+  waveCtx.fillStyle=accent;
   for(let i=0;i<bars;i++){
-    const v=buf[Math.floor(i*buf.length/bars)]/255;
+    const idx=Math.floor(i*buf.length/bars/2);
+    const v=buf[idx]/255;
+    const h=Math.max(2,v*30);
+    const y=(32-h)/2;
+    waveCtx.globalAlpha=0.25+v*0.75;
+    drawBar(ox+i*(bw+gap),y,bw,h);
+  }
+  waveCtx.globalAlpha=1;
+}
+
+let fakePhase=0;
+function drawFakeWave(){
+  waveAnimId=requestAnimationFrame(drawFakeWave);
+  fakePhase+=0.08;
+  waveCtx.clearRect(0,0,120,32);
+  const bars=30, bw=2, gap=1.5;
+  const total=bars*(bw+gap);
+  const ox=(120-total)/2;
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
+  waveCtx.fillStyle=accent;
+  for(let i=0;i<bars;i++){
+    const v=0.3+0.7*Math.abs(Math.sin(fakePhase+i*0.35));
     const h=Math.max(2,v*28);
     const y=(32-h)/2;
-    waveCtx.fillStyle=accent;
-    waveCtx.globalAlpha=0.3+v*0.7;
-    waveCtx.beginPath();
-    waveCtx.roundRect(ox+i*(bw+gap),y,bw,h,1);
-    waveCtx.fill();
+    waveCtx.globalAlpha=0.3+v*0.5;
+    drawBar(ox+i*(bw+gap),y,bw,h);
   }
   waveCtx.globalAlpha=1;
 }
