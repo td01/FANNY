@@ -57,7 +57,7 @@ html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);fon
   color:var(--accent);transition:color var(--transition);
 }
 
-/* ── FANNY FACE ── */
+/* ── FANNY ORB ── */
 #fannyWrap{
   position:fixed;
   left:50%;top:50%;
@@ -66,18 +66,29 @@ html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);fon
   display:flex;flex-direction:column;align-items:center;
   transition:transform .8s cubic-bezier(.34,1.56,.64,1);
 }
-
 #fannyWrap.talking{transform:translate(-50%,-65%)}
 #fannyWrap.listening{transform:translate(-50%,-58%)}
 
-#fannyFace{width:140px;height:140px}
-#fannyFace svg{width:100%;height:100%}
+#fannyOrb{
+  position:relative;
+  width:200px;height:200px;
+  display:flex;align-items:center;justify-content:center;
+}
+#orbCanvas{position:absolute;inset:0;border-radius:50%}
+#fannyInitial{
+  position:relative;z-index:2;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:80px;letter-spacing:4px;
+  color:var(--accent);
+  opacity:.9;
+  transition:color var(--transition);
+  user-select:none;
+}
 
-/* mood label */
 #moodLabel{
-  margin-top:10px;
-  font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;
-  color:var(--accent);opacity:.8;
+  margin-top:12px;
+  font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:3px;
+  color:var(--accent);opacity:.7;
   transition:all .4s;text-align:center;
 }
 
@@ -258,32 +269,12 @@ html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);fon
 <!-- Pulse ring behind face -->
 <div id="pulseRing"></div>
 
-<!-- Fanny face -->
+<!-- Fanny orb -->
 <div id="fannyWrap">
-  <svg id="fannyFace" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="70" cy="74" r="50" fill="#d4956a"/>
-    <ellipse cx="70" cy="28" rx="44" ry="18" fill="#2a1a0e"/>
-    <ellipse cx="34" cy="48" rx="13" ry="24" fill="#2a1a0e"/>
-    <ellipse cx="106" cy="48" rx="13" ry="24" fill="#2a1a0e"/>
-    <ellipse cx="20" cy="76" rx="8" ry="10" fill="#c4855a"/>
-    <ellipse cx="120" cy="76" rx="8" ry="10" fill="#c4855a"/>
-    <rect x="56" y="118" width="28" height="16" rx="5" fill="#d4956a"/>
-    <path d="M32 134 Q70 126 108 134 L116 140 L24 140 Z" fill="#e8b84b"/>
-    <g id="eyesG">
-      <ellipse id="leyeW" cx="52" cy="72" rx="9" ry="10" fill="white"/>
-      <circle id="lpup" cx="53" cy="73" r="5.5" fill="#1a0a00"/>
-      <circle cx="55" cy="70" r="1.8" fill="white"/>
-      <ellipse id="reyeW" cx="88" cy="72" rx="9" ry="10" fill="white"/>
-      <circle id="rpup" cx="89" cy="73" r="5.5" fill="#1a0a00"/>
-      <circle cx="91" cy="70" r="1.8" fill="white"/>
-    </g>
-    <path id="lbrow" d="M42 59 Q52 54 63 57" stroke="#2a1a0e" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path id="rbrow" d="M77 57 Q88 54 98 59" stroke="#2a1a0e" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <ellipse cx="70" cy="86" rx="5" ry="3.5" fill="#c4855a"/>
-    <path id="mouthP" d="M54 100 Q70 114 86 100" stroke="#8b3a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <ellipse id="lchk" cx="38" cy="92" rx="10" ry="7" fill="rgba(220,80,80,.3)" opacity="0"/>
-    <ellipse id="rchk" cx="102" cy="92" rx="10" ry="7" fill="rgba(220,80,80,.3)" opacity="0"/>
-  </svg>
+  <div id="fannyOrb">
+    <canvas id="orbCanvas" width="200" height="200"></canvas>
+    <div id="fannyInitial">F</div>
+  </div>
   <div id="moodLabel">Ready…</div>
 </div>
 
@@ -361,11 +352,11 @@ const countryFlag=document.getElementById('countryFlag');
 const countryName=document.getElementById('countryName');
 
 // Face elements
-const mouthP=document.getElementById('mouthP');
-const lbrow=document.getElementById('lbrow');
-const rbrow=document.getElementById('rbrow');
-const lchk=document.getElementById('lchk');
-const rchk=document.getElementById('rchk');
+
+
+
+
+
 
 // ── THEME ──
 function applyTheme(theme){
@@ -635,10 +626,13 @@ function stopListening(){
 }
 
 
-// ── REAL AUDIO WAVEFORM ──
+// ── ORB WAVEFORM ──
 let audioCtx=null, analyser=null, waveAnimId=null;
+const orbCanvas=document.getElementById('orbCanvas');
+const orbCtx=orbCanvas.getContext('2d');
+// Keep small status canvas too
 const waveCanvas=document.getElementById('waveCanvas');
-const waveCtx=waveCanvas.getContext('2d');
+const waveCtx=waveCanvas?waveCanvas.getContext('2d'):null;
 
 function startWaveform(audioEl){
   try{
@@ -658,62 +652,94 @@ function startWaveform(audioEl){
     drawWave();
   }catch(e){
     console.warn('Waveform error:',e);
-    waveCanvas.classList.add('active');
+    orbCanvas.classList.add('active');
     drawFakeWave();
   }
 }
 
 function stopWaveform(){
   if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}
-  waveCanvas.classList.remove('active');
-  waveCtx.clearRect(0,0,120,32);
+  orbCanvas.classList.remove('active');
+  drawIdleOrb();
 }
 
-function drawBar(x,y,w,h){
-  waveCtx.beginPath();
-  waveCtx.rect(x,y,w,h);
-  waveCtx.fill();
+function drawOrb(buf, fake=false){
+  const W=200, H=200, cx=100, cy=100;
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
+  orbCtx.clearRect(0,0,W,H);
+
+  // Base circle
+  orbCtx.beginPath();
+  orbCtx.arc(cx,cy,72,0,Math.PI*2);
+  orbCtx.fillStyle='rgba(0,0,0,0.35)';
+  orbCtx.fill();
+
+  // Waveform ring
+  const bars=64;
+  for(let i=0;i<bars;i++){
+    const angle=(i/bars)*Math.PI*2 - Math.PI/2;
+    let v;
+    if(fake){
+      v=0.2+0.6*Math.abs(Math.sin(fakePhase+i*0.2));
+    } else {
+      v=buf[Math.floor(i*buf.length/bars)]/255;
+    }
+    const inner=68;
+    const outer=inner+4+v*32;
+    const x1=cx+Math.cos(angle)*inner;
+    const y1=cy+Math.sin(angle)*inner;
+    const x2=cx+Math.cos(angle)*outer;
+    const y2=cy+Math.sin(angle)*outer;
+    orbCtx.beginPath();
+    orbCtx.moveTo(x1,y1);
+    orbCtx.lineTo(x2,y2);
+    orbCtx.strokeStyle=accent;
+    orbCtx.globalAlpha=0.3+v*0.7;
+    orbCtx.lineWidth=2.5;
+    orbCtx.stroke();
+  }
+  orbCtx.globalAlpha=1;
+
+  // Outer glow ring
+  orbCtx.beginPath();
+  orbCtx.arc(cx,cy,70,0,Math.PI*2);
+  orbCtx.strokeStyle=accent;
+  orbCtx.globalAlpha=0.15;
+  orbCtx.lineWidth=1;
+  orbCtx.stroke();
+  orbCtx.globalAlpha=1;
 }
+
+function drawIdleOrb(){
+  const W=200,H=200,cx=100,cy=100;
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
+  orbCtx.clearRect(0,0,W,H);
+  orbCtx.beginPath();
+  orbCtx.arc(cx,cy,72,0,Math.PI*2);
+  orbCtx.fillStyle='rgba(0,0,0,0.35)';
+  orbCtx.fill();
+  orbCtx.beginPath();
+  orbCtx.arc(cx,cy,70,0,Math.PI*2);
+  orbCtx.strokeStyle=accent;
+  orbCtx.globalAlpha=0.2;
+  orbCtx.lineWidth=1.5;
+  orbCtx.stroke();
+  orbCtx.globalAlpha=1;
+}
+drawIdleOrb();
 
 function drawWave(){
   waveAnimId=requestAnimationFrame(drawWave);
   const buf=new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(buf);
-  waveCtx.clearRect(0,0,120,32);
-  const bars=30, bw=2, gap=1.5;
-  const total=bars*(bw+gap);
-  const ox=(120-total)/2;
-  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
-  waveCtx.fillStyle=accent;
-  for(let i=0;i<bars;i++){
-    const idx=Math.floor(i*buf.length/bars/2);
-    const v=buf[idx]/255;
-    const h=Math.max(2,v*30);
-    const y=(32-h)/2;
-    waveCtx.globalAlpha=0.25+v*0.75;
-    drawBar(ox+i*(bw+gap),y,bw,h);
-  }
-  waveCtx.globalAlpha=1;
+  drawOrb(buf,false);
 }
 
 let fakePhase=0;
 function drawFakeWave(){
   waveAnimId=requestAnimationFrame(drawFakeWave);
-  fakePhase+=0.08;
-  waveCtx.clearRect(0,0,120,32);
-  const bars=30, bw=2, gap=1.5;
-  const total=bars*(bw+gap);
-  const ox=(120-total)/2;
-  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
-  waveCtx.fillStyle=accent;
-  for(let i=0;i<bars;i++){
-    const v=0.3+0.7*Math.abs(Math.sin(fakePhase+i*0.35));
-    const h=Math.max(2,v*28);
-    const y=(32-h)/2;
-    waveCtx.globalAlpha=0.3+v*0.5;
-    drawBar(ox+i*(bw+gap),y,bw,h);
-  }
-  waveCtx.globalAlpha=1;
+  fakePhase+=0.05;
+  drawOrb(null,true);
 }
 
 // ── BOOT ──
