@@ -193,24 +193,12 @@ html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);fon
 #interruptBtn.show{opacity:1}
 #interruptBtn:hover{background:rgba(255,255,255,.1);color:white}
 
-/* ── LISTENING WAVEFORM ── */
-#waveBars{
-  display:flex;align-items:center;gap:3px;
-  height:24px;
+/* ── WAVEFORM CANVAS ── */
+#waveCanvas{
+  width:120px;height:32px;
+  opacity:0;transition:opacity .4s;
 }
-.wb{
-  width:3px;border-radius:2px;
-  background:var(--accent);
-  transform-origin:bottom;
-  transition:background var(--transition);
-}
-.wb.active{animation:wbanim 1s infinite ease-in-out}
-.wb:nth-child(1){height:4px;animation-delay:0s}
-.wb:nth-child(2){height:10px;animation-delay:.1s}
-.wb:nth-child(3){height:18px;animation-delay:.2s}
-.wb:nth-child(4){height:10px;animation-delay:.3s}
-.wb:nth-child(5){height:4px;animation-delay:.4s}
-@keyframes wbanim{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+#waveCanvas.active{opacity:1}
 
 /* ── ERROR ── */
 #errMsg{
@@ -306,10 +294,7 @@ html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);fon
 <!-- Status bar -->
 <div id="statusBar">
   <div id="statusDot"></div>
-  <div id="waveBars">
-    <div class="wb"></div><div class="wb"></div><div class="wb"></div>
-    <div class="wb"></div><div class="wb"></div>
-  </div>
+  <canvas id="waveCanvas" width="120" height="32"></canvas>
   <div id="statusMsg">Waiting…</div>
 </div>
 
@@ -368,7 +353,7 @@ const userTextEl=document.getElementById('userText');
 const statusDot=document.getElementById('statusDot');
 const statusMsg=document.getElementById('statusMsg');
 const moodLabel=document.getElementById('moodLabel');
-const waveBars=document.querySelectorAll('.wb');
+
 const interruptBtn=document.getElementById('interruptBtn');
 const errMsg=document.getElementById('errMsg');
 const countryStrip=document.getElementById('countryStrip');
@@ -408,9 +393,7 @@ function setCountry(teamName){
 function setStatus(state,text){
   statusDot.className=state||'';
   statusMsg.textContent=text;
-  waveBars.forEach(b=>{
-    b.classList.toggle('active', state==='listen'||state==='speak');
-  });
+  
 }
 
 function showErr(msg,duration=6000){
@@ -503,9 +486,11 @@ async function speak(text){
     currentAudio=audio;
     audio.onended=audio.onerror=()=>{
       URL.revokeObjectURL(url);currentAudio=null;
+      stopWaveform();
       doneSpeak();
     };
     await audio.play();
+    startWaveform(audio);
   }catch(e){
     console.warn('ElevenLabs failed:',e);
     fallbackSpeak(text);
@@ -525,6 +510,7 @@ function fallbackSpeak(text){
 
 function doneSpeak(){
   isSpeaking=false;
+  stopWaveform();
   fannyWrap.classList.remove('talking');
   pulseRing.classList.remove('active');
   interruptBtn.classList.remove('show');
@@ -646,6 +632,51 @@ function stopListening(){
   isListening=false;
   pulseRing.classList.remove('listen');
   try{recognition.stop()}catch(_){}
+}
+
+
+// ── REAL AUDIO WAVEFORM ──
+let audioCtx=null, analyser=null, waveAnimId=null;
+const waveCanvas=document.getElementById('waveCanvas');
+const waveCtx=waveCanvas.getContext('2d');
+
+function startWaveform(audioEl){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(analyser){analyser.disconnect();analyser=null;}
+  analyser=audioCtx.createAnalyser();
+  analyser.fftSize=128;
+  const src=audioCtx.createMediaElementSource(audioEl);
+  src.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  waveCanvas.classList.add('active');
+  drawWave();
+}
+
+function stopWaveform(){
+  if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}
+  waveCanvas.classList.remove('active');
+  waveCtx.clearRect(0,0,120,32);
+}
+
+function drawWave(){
+  waveAnimId=requestAnimationFrame(drawWave);
+  const buf=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(buf);
+  waveCtx.clearRect(0,0,120,32);
+  const bars=28, bw=2, gap=2, total=bars*(bw+gap);
+  const ox=(120-total)/2;
+  const accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';
+  for(let i=0;i<bars;i++){
+    const v=buf[Math.floor(i*buf.length/bars)]/255;
+    const h=Math.max(2,v*28);
+    const y=(32-h)/2;
+    waveCtx.fillStyle=accent;
+    waveCtx.globalAlpha=0.3+v*0.7;
+    waveCtx.beginPath();
+    waveCtx.roundRect(ox+i*(bw+gap),y,bw,h,1);
+    waveCtx.fill();
+  }
+  waveCtx.globalAlpha=1;
 }
 
 // ── BOOT ──
