@@ -1,4 +1,4 @@
-const VOICE_ID = "EQx6HGDYjkDpcli6vorJ"; // Lizzie - Cockney Character
+const VOICE_ID = "EQx6HGDYjkDpcli6vorJ";
 
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
@@ -9,7 +9,7 @@ exports.handler = async function (event) {
   if (!ELEVENLABS_API_KEY) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "ELEVENLABS_API_KEY not set in environment" }),
+      body: JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }),
     };
   }
 
@@ -24,8 +24,6 @@ exports.handler = async function (event) {
   if (!text || typeof text !== "string") {
     return { statusCode: 400, body: JSON.stringify({ error: "Missing text" }) };
   }
-
-  console.log(`Speaking with voice ${VOICE_ID}, text length: ${text.length}`);
 
   try {
     const response = await fetch(
@@ -49,11 +47,8 @@ exports.handler = async function (event) {
       }
     );
 
-    console.log(`ElevenLabs response status: ${response.status}`);
-
     if (!response.ok) {
       const err = await response.text();
-      console.error(`ElevenLabs error: ${err}`);
       return {
         statusCode: response.status,
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
@@ -63,7 +58,6 @@ exports.handler = async function (event) {
 
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
-    console.log(`Audio returned, base64 length: ${base64.length}`);
 
     return {
       statusCode: 200,
@@ -74,7 +68,6 @@ exports.handler = async function (event) {
       body: JSON.stringify({ audio: base64 }),
     };
   } catch (err) {
-    console.error(`speak.js exception: ${err.message}`);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
