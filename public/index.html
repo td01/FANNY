@@ -526,8 +526,13 @@ async function askFanny(userMsg){
   pulseRing.classList.remove('listen');
   stopListening();
 
+  // Show "thinking" text immediately so there's no dead air
+  fannyTextEl.textContent='"…"';
+  fannyTextEl.classList.add('show');
+
   try{
-    const res=await fetch('/.netlify/functions/chat',{
+    // Fire Claude and ElevenLabs fetch in sequence but prepare ElevenLabs immediately
+    const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:SYSTEM,messages:history})
     });
@@ -538,8 +543,14 @@ async function askFanny(userMsg){
     history.push({role:'assistant',content:raw});
     if(team&&!currentTeam) setCountry(team);
     setMood(mood);
+
+    // Show text IMMEDIATELY while audio loads
+    showFannyText(clean);
+
+    // Fire audio — non-blocking display already done
     speak(clean);
   }catch(e){
+    fannyTextEl.classList.remove('show');
     showErr(e.message,8000);
     setStatus('listen','Try again');
     setMood('idle');
@@ -549,7 +560,7 @@ async function askFanny(userMsg){
 }
 
 // ── SPEECH RECOGNITION ── (always on)
-let interimTranscript='', finalTranscript='', silenceTimer=null;
+let interimTranscript='', finalTranscript='', silenceTimer=null, pendingSend=false;
 
 function initRecognition(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -570,23 +581,36 @@ function initRecognition(){
 
     if(live) showUserText(live, !finalTranscript);
 
-    // If Fanny is speaking and user talks, interrupt
-    if(isSpeaking && live.length>3){
-      interrupt();
-      return;
-    }
+    // Interrupt if Fanny is speaking
+    if(isSpeaking && live.length>3){ interrupt(); return; }
 
-    // Auto-send after silence
     if(finalTranscript){
-      clearTimeout(silenceTimer);
-      silenceTimer=setTimeout(()=>{
-        const msg=finalTranscript.trim();
-        if(msg&&!isSpeaking){
-          showUserText(msg);
-          finalTranscript='';interimTranscript='';
-          askFanny(msg);
-        }
-      },400);
+      // Fire immediately on sentence-ending punctuation
+      const endsCleanly=/[.?!,;]\s*$/.test(finalTranscript) || finalTranscript.split(' ').length>=6;
+      if(endsCleanly && !pendingSend){
+        pendingSend=true;
+        // Small debounce so mic catches trailing words
+        clearTimeout(silenceTimer);
+        silenceTimer=setTimeout(()=>{
+          const msg=finalTranscript.trim();
+          if(msg&&!isSpeaking){
+            showUserText(msg);
+            finalTranscript='';interimTranscript='';pendingSend=false;
+            askFanny(msg);
+          }
+        },300);
+      } else {
+        // Fallback silence timer
+        clearTimeout(silenceTimer);
+        silenceTimer=setTimeout(()=>{
+          const msg=finalTranscript.trim();
+          if(msg&&!isSpeaking){
+            showUserText(msg);
+            finalTranscript='';interimTranscript='';pendingSend=false;
+            askFanny(msg);
+          }
+        },600);
+      }
     }
   };
 
@@ -742,7 +766,7 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
   initRecognition();
 
   try{
-    const res=await fetch('/.netlify/functions/chat',{
+    const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Start the debate. Say hi like we're in a pub. Introduce yourself as Fanny very briefly. Ask what country I'm supporting this summer. Max 2 sentences, proper Cockney."}]})
     });
