@@ -337,22 +337,38 @@ function setupMicVAD(stream){
   vadLoop();
 }
 
+let noiseFloor=0, vadCalibrated=false, vadSamples=[];
+let lastInterruptTime=0;
+
 function vadLoop(){
   if(!micAnalyser)return;
   const buf=new Uint8Array(micAnalyser.frequencyBinCount);
   micAnalyser.getByteFrequencyData(buf);
   const avg=buf.reduce((a,b)=>a+b,0)/buf.length;
-  const pct=Math.min(100,avg*3);
+  const pct=Math.min(100,avg*2);
   vadFill.style.width=pct+'%';
 
-  // Voice detected
-  if(avg>18){
-    lastVoiceTime=Date.now();
-    if(isSpeaking){
-      // Interrupt Fanny if user speaks loudly
-      interrupt();
+  // Calibrate noise floor over first 2 seconds
+  if(!vadCalibrated){
+    vadSamples.push(avg);
+    if(vadSamples.length>60){
+      noiseFloor=Math.max(8, (vadSamples.reduce((a,b)=>a+b,0)/vadSamples.length)*1.8);
+      vadCalibrated=true;
+      console.log('VAD noise floor calibrated:',noiseFloor);
     }
+    requestAnimationFrame(vadLoop);
+    return;
   }
+
+  // Only interrupt if WELL above noise floor, and not too frequently
+  const threshold=Math.max(22, noiseFloor+12);
+  const now=Date.now();
+  if(avg>threshold && isSpeaking && (now-lastInterruptTime)>2000){
+    lastInterruptTime=now;
+    lastVoiceTime=now;
+    interrupt();
+  }
+
   requestAnimationFrame(vadLoop);
 }
 
@@ -424,6 +440,12 @@ function doneSpeaking(){
   setStatus('listen','Listening…');
   orbWrap.classList.add('listening');
   pulseRing.classList.add('listen');
+  // If user spoke while Fanny was talking, send it now
+  if(pendingTranscript&&pendingTranscript.trim()){
+    const msg=pendingTranscript.trim();
+    pendingTranscript='';finalT='';
+    setTimeout(()=>askFanny(msg),150);
+  }
 }
 
 function interrupt(){
@@ -519,9 +541,8 @@ function initSpeech(stream){
 
     if(live)showUserText(live,!finalT);
 
-    // Interrupt detection via transcript
-    if((isSpeaking||isThinking)&&live.length>2){
-      interrupt();
+    // If Fanny is speaking, just accumulate — VAD handles interrupts
+    if(isSpeaking||sending){
       if(fin)pendingTranscript=finalT;
       return;
     }
