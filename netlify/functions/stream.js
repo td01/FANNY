@@ -22,7 +22,6 @@ exports.handler = async function(event) {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'messages-2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
