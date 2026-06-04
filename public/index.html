@@ -337,7 +337,7 @@ function setupMicVAD(stream){
   vadLoop();
 }
 
-let noiseFloor=0, vadCalibrated=false, vadSamples=[];
+let noiseFloor=0, vadCalibrated=false, vadSamples=[], vadLoudCount=0;
 let lastInterruptTime=0;
 
 function vadLoop(){
@@ -360,12 +360,19 @@ function vadLoop(){
     return;
   }
 
-  // Only interrupt if WELL above noise floor, and not too frequently
-  const threshold=Math.max(22, noiseFloor+12);
+  // Require sustained loud voice — not a spike — to interrupt
+  const threshold=Math.max(40, noiseFloor+22);
   const now=Date.now();
-  if(avg>threshold && isSpeaking && (now-lastInterruptTime)>2000){
-    lastInterruptTime=now;
+  if(avg>threshold){
     lastVoiceTime=now;
+    vadLoudCount=(vadLoudCount||0)+1;
+  } else {
+    vadLoudCount=Math.max(0,(vadLoudCount||0)-2);
+  }
+  // Must be loud for 8+ consecutive frames (~130ms) before interrupting
+  if(vadLoudCount>=8 && isSpeaking && (now-lastInterruptTime)>3000){
+    lastInterruptTime=now;
+    vadLoudCount=0;
     interrupt();
   }
 
@@ -485,26 +492,14 @@ function parseReply(raw){
   return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
 }
 
-// Filler phrases played instantly while Claude thinks
-const FILLERS=[
-  "Hmm...", "Ooh...", "Right...", "Cor...", "Ha...", "Mmm..."
-];
-let fillerAudio=null;
-
+// Visual thinking indicator — no audio filler (avoids voice mismatch)
 function playFiller(){
-  // Use browser TTS for instant zero-latency filler
-  if(window.speechSynthesis){
-    window.speechSynthesis.cancel();
-    const filler=FILLERS[Math.floor(Math.random()*FILLERS.length)];
-    const u=new SpeechSynthesisUtterance(filler);
-    u.rate=0.9;u.pitch=1.1;u.volume=0.7;
-    const voices=window.speechSynthesis.getVoices();
-    const pick=voices.find(v=>/female|samantha|karen/i.test(v.name)&&v.lang.startsWith('en'))
-               ||voices.find(v=>v.lang.startsWith('en-GB'))
-               ||voices.find(v=>v.lang.startsWith('en'));
-    if(pick)u.voice=pick;
-    window.speechSynthesis.speak(u);
-  }
+  // Animate orb and show dots to signal Fanny is thinking
+  fannyTextEl.textContent='"…"';
+  fannyTextEl.classList.add('show');
+  // Brief pulse on the orb
+  orbWrap.style.transform='translate(-50%,-50%) scale(1.04)';
+  setTimeout(()=>orbWrap.style.transform='',200);
 }
 
 async function askFanny(msg){
@@ -538,7 +533,6 @@ async function askFanny(msg){
     if(team)setCountry(team);
     setMood(mood);
     sending=false;
-    window.speechSynthesis?.cancel(); // kill filler before real voice
     speak(clean);
   }catch(e){
     sending=false;
@@ -613,6 +607,23 @@ function initSpeech(stream){
   setupMicVAD(stream);
 }
 
+// ── MIC MODAL ──
+function showMicModal(msg){
+  const modal=document.createElement('div');
+  modal.style.cssText=`position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;gap:16px`;
+  modal.innerHTML=`
+    <div style="font-size:40px">🎤</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#e8b84b">Microphone Needed</div>
+    <div style="font-size:14px;color:#ccc;max-width:300px;line-height:1.6">${msg}</div>
+    <button onclick="location.reload()" style="margin-top:8px;padding:12px 32px;
+      background:#e8b84b;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;
+      font-size:18px;letter-spacing:2px;cursor:pointer;color:#0a0f1e">Try Again</button>
+  `;
+  document.body.appendChild(modal);
+}
+
 // ── BOOT ──
 document.getElementById('startBtn').addEventListener('click',async()=>{
   const intro=document.getElementById('intro');
@@ -632,7 +643,16 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
       sampleRate:16000
     }});
   }catch(e){
-    showErr('Mic access denied — please allow and refresh');
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    let msg='Microphone access denied.';
+    if(isIOS||isSafari){
+      msg='To allow mic on iPhone/iPad: Settings → Safari → Microphone → Allow. Then refresh.';
+    } else {
+      msg='Click the 🔒 lock icon in your browser address bar → Microphone → Allow → Refresh.';
+    }
+    // Show a proper modal instead of just a red banner
+    showMicModal(msg);
     stopOrbAnim();drawOrbIdle();
     return;
   }
