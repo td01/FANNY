@@ -8,148 +8,210 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--c1:#0c0e14;--c2:#13161f;--accent:#e8b84b;--text:#eceae0;--muted:rgba(240,237,228,.45);--tr:1.2s}
+:root{
+  --c1:#0c0e14;--c2:#13161f;--accent:#e8b84b;--text:#eceae0;--muted:rgba(240,237,228,.45);--tr:1.2s;
+}
 html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);font-family:'Barlow',sans-serif}
 body{display:flex;flex-direction:column;height:100dvh}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.018) 60px,rgba(255,255,255,.018) 61px)}
-#bg{position:fixed;inset:0;z-index:0;transition:background var(--tr);
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.018) 60px,rgba(255,255,255,.018) 61px);
+  pointer-events:none}
+
+#bg{position:fixed;inset:0;z-index:0;transition:background var(--tr) ease;
   background:radial-gradient(ellipse at 40% 50%,var(--c2) 0%,var(--c1) 70%)}
 
-.logo{position:fixed;top:20px;left:24px;z-index:10;font-family:'Bebas Neue',sans-serif;
-  font-size:20px;letter-spacing:3px;color:var(--accent);opacity:.6}
-.ctry{position:fixed;top:16px;right:24px;z-index:10;display:flex;align-items:center;
-  gap:8px;opacity:0;transition:opacity .6s}.ctry.show{opacity:1}
-.ctry-flag{font-size:26px}
-.ctry-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+.logo{position:fixed;top:20px;left:24px;z-index:10;
+  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);opacity:.6}
 
-/* ── VIDEO ── */
+.ctry{position:fixed;top:16px;right:24px;z-index:10;
+  display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .6s}
+.ctry.show{opacity:1}
+.ctry-flag{font-size:26px}.ctry-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+
+/* ── D-ID VIDEO ── */
 #videoWrap{
-  position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:5;
-  width:min(300px,75vw);aspect-ratio:9/16;border-radius:20px;overflow:hidden;
-  box-shadow:0 0 50px rgba(0,0,0,.7),0 0 0 1px rgba(232,184,75,.12);background:#080808;
-  transition:box-shadow .5s}
-#videoWrap.active{box-shadow:0 0 80px rgba(232,184,75,.3),0 0 0 2px rgba(232,184,75,.5)}
-#didVideo{width:100%;height:100%;object-fit:cover;display:block}
+  position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
+  z-index:5;
+  width:min(340px,80vw);
+  aspect-ratio:9/16;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 0 1px rgba(232,184,75,.15);
+  background:#0a0a0a;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1), box-shadow .6s;
+}
+#videoWrap.talking{
+  box-shadow:0 0 80px rgba(232,184,75,.25), 0 0 0 2px rgba(232,184,75,.4);
+}
 
-#overlay{position:absolute;inset:0;background:rgba(8,8,16,.9);z-index:6;
+#didVideo{
+  width:100%;height:100%;object-fit:cover;
+  display:block;
+}
+
+/* connecting overlay */
+#connectOverlay{
+  position:absolute;inset:0;
+  background:rgba(10,10,20,.92);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-  transition:opacity .6s}
-#overlay.hide{opacity:0;pointer-events:none}
-.spinner{width:36px;height:36px;border-radius:50%;border:2px solid rgba(232,184,75,.15);
-  border-top-color:var(--accent);animation:spin 1s linear infinite}
+  z-index:6;transition:opacity .5s;
+}
+#connectOverlay.hide{opacity:0;pointer-events:none}
+.conn-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(232,184,75,.2);
+  border-top-color:var(--accent);
+  animation:spin 1s linear infinite;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ovtxt{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.conn-text{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
 
-#moodBadge{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:7;
-  background:rgba(0,0,0,.7);backdrop-filter:blur(8px);border:1px solid rgba(232,184,75,.25);
-  border-radius:20px;padding:4px 14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--accent);white-space:nowrap;transition:all .4s}
+/* mood badge on video */
+#moodBadge{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
+  border:1px solid rgba(232,184,75,.3);border-radius:20px;
+  padding:4px 14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);z-index:7;transition:all .4s;white-space:nowrap;
+}
 
-/* pulse ring */
-#ring{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
-  width:min(330px,82vw);aspect-ratio:1/1;border-radius:50%;
-  border:1.5px solid var(--accent);opacity:0;pointer-events:none;z-index:4;transition:border-color var(--tr)}
-#ring.listen{animation:rp 2.2s infinite ease-out}
-#ring.speak{animation:rp 1s infinite ease-out;border-color:rgba(232,184,75,.7)}
-@keyframes rp{0%{opacity:.4;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.18)}}
+/* VAD ring around video */
+#vadRing{
+  position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
+  width:min(360px,84vw);
+  aspect-ratio:1/1;
+  border-radius:50%;
+  border:2px solid var(--accent);
+  opacity:0;pointer-events:none;z-index:4;
+  transition:border-color var(--tr);
+}
+#vadRing.listen{animation:vadpulse 2s infinite ease-out}
+#vadRing.speak{animation:vadpulse 1s infinite ease-out;border-color:rgba(232,184,75,.6)}
+@keyframes vadpulse{0%{opacity:.4;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.15)}}
 
 /* TEXT */
-#fannyText{position:fixed;left:6%;right:6%;top:4vh;text-align:center;
-  font-size:clamp(14px,2.4vw,26px);font-weight:300;font-style:italic;line-height:1.5;
-  color:var(--text);opacity:0;transform:translateY(-8px);transition:opacity .4s,transform .4s;
-  pointer-events:none;z-index:6}
+#fannyText{
+  position:fixed;left:6%;right:6%;top:5vh;
+  text-align:center;font-size:clamp(15px,2.5vw,26px);font-weight:300;font-style:italic;
+  line-height:1.5;color:var(--text);opacity:0;transform:translateY(-8px);
+  transition:opacity .4s,transform .4s;pointer-events:none;z-index:6}
 #fannyText.show{opacity:1;transform:translateY(0)}
 .fw{display:inline-block}
 
-#userText{position:fixed;left:6%;right:6%;bottom:68px;text-align:center;
-  font-size:clamp(13px,2vw,20px);font-weight:700;letter-spacing:.5px;color:var(--accent);
-  opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s,color var(--tr);
-  pointer-events:none;z-index:6}
+#userText{
+  position:fixed;left:6%;right:6%;bottom:72px;
+  text-align:center;font-size:clamp(13px,2vw,20px);font-weight:700;letter-spacing:.5px;
+  color:var(--accent);opacity:0;transform:translateY(8px);
+  transition:opacity .3s,transform .3s,color var(--tr);pointer-events:none;z-index:6}
 #userText.show{opacity:1;transform:translateY(0)}
-#userText.dim{opacity:.35;font-style:italic;font-weight:400}
+#userText.dim{opacity:.4;font-style:italic;font-weight:400}
 
 /* STATUS */
-#sbar{position:fixed;bottom:0;left:0;right:0;height:52px;z-index:10;
+#statusBar{
+  position:fixed;bottom:0;left:0;right:0;height:52px;z-index:10;
   display:flex;align-items:center;justify-content:center;gap:10px;
-  background:rgba(0,0,0,.4);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.05)}
+  background:rgba(0,0,0,.4);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,.05)}
 #sdot{width:7px;height:7px;border-radius:50%;background:#333;transition:background .3s;flex-shrink:0}
-#sdot.ready{background:#22c55e}#sdot.listen{background:var(--accent);animation:dp .8s infinite}
-#sdot.think{background:#a78bfa;animation:dp 1s infinite}#sdot.speak{background:#60a5fa;animation:dp .9s infinite}
+#sdot.ready{background:#22c55e}
+#sdot.listen{background:var(--accent);animation:dp .8s infinite}
+#sdot.think{background:#a78bfa;animation:dp 1s infinite}
+#sdot.speak{background:#60a5fa;animation:dp .9s infinite}
 @keyframes dp{0%,100%{opacity:1}50%{opacity:.2}}
-#smsg{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);min-width:140px;text-align:center}
-#ibtn{position:fixed;bottom:60px;right:18px;z-index:11;width:36px;height:36px;border-radius:50%;
-  border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.5);color:rgba(255,255,255,.3);
-  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .3s}#ibtn.show{opacity:1}#ibtn:hover{background:rgba(255,255,255,.08);color:white}
+#statusMsg{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);min-width:140px;text-align:center}
 
-#vadBar{position:fixed;bottom:52px;left:0;right:0;height:2px;z-index:9}
-#vadFill{height:100%;width:0%;background:var(--accent);transition:width .08s,background var(--tr)}
+#intBtn{
+  position:fixed;bottom:60px;right:20px;z-index:11;
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.5);color:rgba(255,255,255,.35);font-size:13px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .3s}
+#intBtn.show{opacity:1}
+#intBtn:hover{background:rgba(255,255,255,.08);color:white}
 
-#err{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:rgba(160,20,20,.95);
-  border-radius:8px;padding:8px 18px;font-size:12px;color:white;z-index:20;display:none;max-width:82%;text-align:center}
+#vadBar{position:fixed;bottom:52px;left:0;right:0;height:2px;background:transparent;z-index:9}
+#vadFill{height:100%;width:0%;background:var(--accent);transition:width .08s}
+
+#errMsg{position:fixed;top:56px;left:50%;transform:translateX(-50%);
+  background:rgba(160,20,20,.95);border-radius:8px;padding:8px 18px;
+  font-size:12px;color:white;z-index:20;display:none;max-width:80%;text-align:center}
 
 /* INTRO */
 #intro{position:fixed;inset:0;z-index:50;background:var(--c1);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .7s}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  transition:opacity .7s}
 #intro.fade{opacity:0;pointer-events:none}
-.il{font-family:'Bebas Neue',sans-serif;font-size:76px;letter-spacing:8px;color:var(--accent);line-height:1}
+.il{font-family:'Bebas Neue',sans-serif;font-size:80px;letter-spacing:8px;color:var(--accent);line-height:1}
 .is{font-size:13px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
 .ib{margin-top:20px;padding:13px 38px;border:2px solid var(--accent);border-radius:40px;
   background:transparent;color:var(--accent);font-family:'Bebas Neue',sans-serif;
   font-size:20px;letter-spacing:3px;cursor:pointer;transition:all .2s}
 .ib:hover{background:var(--accent);color:#0a0f1e}
-.in{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:4px}
+.in{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:6px}
+
+@media(max-width:480px){
+  #videoWrap{width:88vw;top:44%}
+  #vadRing{width:92vw}
+}
 </style>
 </head>
 <body>
 <div id="bg"></div>
+
 <div id="intro">
   <div class="il">FANNY</div>
   <div class="is">World Cup 2026 · Fan Debater</div>
   <button class="ib" id="startBtn">Start the Debate</button>
   <div class="in">Allow microphone when asked</div>
 </div>
+
 <div class="logo">FANNY ⚽</div>
 <div class="ctry" id="ctry"><span class="ctry-flag" id="ctryFlag"></span><span class="ctry-name" id="ctryName"></span></div>
-<div id="ring"></div>
+
+<div id="vadRing"></div>
+
 <div id="videoWrap">
-  <video id="didVideo" autoplay playsinline></video>
-  <div id="overlay"><div class="spinner"></div><div class="ovtxt" id="ovtxt">Connecting to Fanny…</div></div>
+  <video id="didVideo" autoplay playsinline muted></video>
+  <div id="connectOverlay">
+    <div class="conn-spinner"></div>
+    <div class="conn-text">Connecting to Fanny…</div>
+  </div>
   <div id="moodBadge">Ready…</div>
 </div>
+
 <div id="fannyText"></div>
 <div id="userText"></div>
 <div id="vadBar"><div id="vadFill"></div></div>
-<div id="sbar"><div id="sdot"></div><div id="smsg">…</div></div>
-<button id="ibtn" title="Interrupt">◼</button>
-<div id="err"></div>
+<div id="statusBar"><div id="sdot"></div><div id="statusMsg">…</div></div>
+<button id="intBtn" title="Interrupt">◼</button>
+<div id="errMsg"></div>
 
 <script>
-const AGENT_ID = 'v2_agt_DVc2eLPi';
-const LIZZIE   = 'EQx6HGDYjkDpcli6vorJ';
+const PRESENTER_ID = 'v2_agt_DVc2eLPi';
+const ELEVENLABS_VOICE = 'EQx6HGDYjkDpcli6vorJ'; // Lizzie
 
-const SYSTEM=`You are Fanny — the sharpest, funniest, most opinionated Cockney football fan in any pub in London.
+const SYSTEM=`You are Fanny — the sharpest, funniest, most opinionated Cockney football fan in any pub in London. You've got a mouth like a market trader and opinions like a tabloid back page. You LOVE a debate and you never, ever back down.
 
 CONVERSATION FLOW:
-- First: ask their name in one punchy Cockney sentence.
-- Once you know their name: warm Cockney greeting then ask what country they're backing.
-- After: use their name naturally every few exchanges.
+- First message: Ask for their name warmly and briefly in one Cockney sentence.
+- Once you know their name: React with a warm funny Cockney greeting then immediately ask what country they're backing.
+- After that: Use their name naturally but sparingly — once every 3-4 exchanges.
 
-RULES:
-- MAX 2 sentences. Usually 1. Banter is rapid fire.
-- SHARP and WITTY. Quick-fire roast, not lecture.
-- Cockney: "blimey","cor","ain't","you 'avin a laugh","pull the other one","on yer bike","tosh" etc.
-- NEVER neutral. Hot takes always.
-- Mock weak teams with charm. Celebrate strong sides with passion.
-- React specifically to what they said. End with cheeky challenge.
+STRICT RULES:
+- MAX 2 sentences. Usually just 1. Banter is rapid fire.
+- Be SHARP and WITTY. Think quick-fire roast, not lecture.
+- Cockney always: "blimey","cor","ain't","you 'avin a laugh","pull the other one","do me a favour","on yer bike","what a load of old tosh" etc.
+- NEVER be neutral. Pick a side and die on that hill.
+- Mock weak teams with charm: "Bless their cotton socks", "they couldn't score in a bowling alley".
+- React to what the user ACTUALLY said — specific, not generic.
+- End with a cheeky question to keep debate alive.
 - World Cup 2026: USA/Canada/Mexico, 48 teams, groups of 3.
-- Stars: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Salah.
-- Haaland: Norway didn't qualify — always a sore point!
+- Stars: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Salah, Lewandowski.
+- Haaland (Norway didn't qualify — very sore point).
 - If interrupted: "Oi! Let a woman finish!" or "Blimey, rude!"
-- End EVERY reply with ONE tag: [MOOD:excited|sceptical|laughing|furious|thinking|impressed]
-- If country first named: [TEAM:CountryName]
-- If name learned: [NAME:TheirName]`;
+- End every reply with ONE tag: [MOOD:excited|sceptical|laughing|furious|thinking|impressed]
+- If country named first time add: [TEAM:CountryName]
+- If user name learned add: [NAME:TheirName]`;
 
 const COUNTRY_THEMES={
   england:{c1:'#08121e',c2:'#0d1f35',accent:'#cf142b',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
@@ -168,24 +230,21 @@ const COUNTRY_THEMES={
   ireland:{c1:'#081408',c2:'#0d200a',accent:'#169b62',flag:'🇮🇪'},
   scotland:{c1:'#080c18',c2:'#0d1428',accent:'#005EB8',flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
   wales:{c1:'#180808',c2:'#250d0d',accent:'#C8102E',flag:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'},
-  colombia:{c1:'#120e00',c2:'#1e1600',accent:'#FCD116',flag:'🇨🇴'},
-  nigeria:{c1:'#081408',c2:'#0d200a',accent:'#008751',flag:'🇳🇬'},
 };
 
-// DOM refs
+// DOM
 const bg=document.getElementById('bg');
-const ring=document.getElementById('ring');
+const vadRing=document.getElementById('vadRing');
 const videoWrap=document.getElementById('videoWrap');
 const didVideo=document.getElementById('didVideo');
-const overlay=document.getElementById('overlay');
-const ovtxt=document.getElementById('ovtxt');
+const connectOverlay=document.getElementById('connectOverlay');
 const fannyTextEl=document.getElementById('fannyText');
 const userTextEl=document.getElementById('userText');
 const sdot=document.getElementById('sdot');
-const smsg=document.getElementById('smsg');
+const statusMsg=document.getElementById('statusMsg');
 const moodBadge=document.getElementById('moodBadge');
-const ibtn=document.getElementById('ibtn');
-const errEl=document.getElementById('err');
+const intBtn=document.getElementById('intBtn');
+const errMsg=document.getElementById('errMsg');
 const ctryEl=document.getElementById('ctry');
 const ctryFlag=document.getElementById('ctryFlag');
 const ctryName=document.getElementById('ctryName');
@@ -193,12 +252,15 @@ const vadFill=document.getElementById('vadFill');
 
 // State
 let history=[], userName=null, currentTeam=null;
-let isSpeaking=false, sending=false, isListening=false;
-let recognition=null, audioCtx=null, micAnalyser=null;
-let noiseFloor=0, vadCalibrated=false, vadSamples=[], vadLoudCount=0, lastInterruptTime=0;
-let finalT='', sendTimer=null, fannyTimer=null;
-let peerConn=null, didStreamId=null, didSessionId=null;
-let interruptCount=0, speakEndTimer=null;
+let isListening=false, isSpeaking=false, sending=false;
+let recognition=null;
+let audioCtx=null, micAnalyser=null;
+let noiseFloor=0, vadCalibrated=false, vadSamples=[], vadLoudCount=0;
+let lastInterruptTime=0;
+let finalT='', sendTimer=null;
+let fannyTextTimer=null;
+let didStreamId=null, didSessionId=null, peerConn=null;
+let interruptCount=0;
 
 // ── THEME ──
 function applyTheme(t){
@@ -210,33 +272,41 @@ function applyTheme(t){
 }
 function setCountry(name){
   const key=name.toLowerCase().replace(/\s+/g,'');
-  const t=COUNTRY_THEMES[key];
-  if(t&&!currentTeam){applyTheme(t);ctryFlag.textContent=t.flag||'';ctryName.textContent=name.toUpperCase();ctryEl.classList.add('show');currentTeam=name;}
+  const theme=COUNTRY_THEMES[key];
+  if(theme&&!currentTeam){
+    applyTheme(theme);
+    ctryFlag.textContent=theme.flag||'';
+    ctryName.textContent=name.toUpperCase();
+    ctryEl.classList.add('show');
+    currentTeam=name;
+  }
 }
 
 // ── STATUS ──
-function setStatus(state,text){sdot.className=state||'';smsg.textContent=text;}
-function showErr(msg,dur=6000){errEl.textContent=msg;errEl.style.display='block';setTimeout(()=>errEl.style.display='none',dur);}
+function setStatus(state,text){sdot.className=state||'';statusMsg.textContent=text;}
+function showErr(msg){errMsg.textContent=msg;errMsg.style.display='block';setTimeout(()=>errMsg.style.display='none',6000);}
 const MOOD_LABELS={excited:'Buzzing!',sceptical:'Really though…',laughing:'Hahaha!',furious:'Outrageous!',thinking:'Hmm…',impressed:'Fair play!',idle:'Ready…',listening:'Listening…'};
 function setMood(m){moodBadge.textContent=MOOD_LABELS[m]||'Ready…';}
 
 // ── TEXT ──
 function showFannyText(t){
-  if(fannyTimer)clearTimeout(fannyTimer);
+  if(fannyTextTimer)clearTimeout(fannyTextTimer);
   const words=t.split(' ');
   fannyTextEl.innerHTML='<span style="opacity:.4">&#8220;</span>'+
     words.map(w=>`<span class="fw" style="opacity:0;transition:opacity .15s">${w}</span>`).join(' ')+
     '<span style="opacity:.4">&#8221;</span>';
   fannyTextEl.classList.add('show');
   fannyTextEl.querySelectorAll('.fw').forEach((s,i)=>setTimeout(()=>s.style.opacity='1',i*100+80));
-  fannyTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),12000);
+  fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),12000);
 }
 function showUserText(t,dim=false){
-  userTextEl.textContent=t;userTextEl.classList.remove('dim');
-  if(dim)userTextEl.classList.add('dim');userTextEl.classList.add('show');
+  userTextEl.textContent=t;
+  userTextEl.classList.remove('dim');
+  if(dim)userTextEl.classList.add('dim');
+  userTextEl.classList.add('show');
 }
 
-// ── PARSE ──
+// ── PARSE REPLY ──
 function parseReply(raw){
   const mM=raw.match(/\[MOOD:(\w+)\]/i);
   const tM=raw.match(/\[TEAM:([^\]]+)\]/i);
@@ -246,131 +316,125 @@ function parseReply(raw){
   return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
 }
 
-// ── D-ID API ──
+// ── D-ID STREAMING ──
 async function didCall(payload){
   const res=await fetch('/.netlify/functions/did-stream',{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
   });
-  const data=await res.json();
-  if(!res.ok)throw new Error(JSON.stringify(data));
-  return data;
+  return res.json();
 }
 
-// ── WebRTC ──
-async function initWebRTC(){
-  ovtxt.textContent='Connecting to Fanny…';
+async function initDIDStream(){
+  try{
+    // Create stream
+    const stream=await didCall({action:'create', presenterId:PRESENTER_ID});
+    if(!stream.id)throw new Error('D-ID stream create failed: '+JSON.stringify(stream));
+    didStreamId=stream.id;
+    didSessionId=stream.session_id;
 
-  // Create stream — D-ID returns an SDP offer
-  const stream=await didCall({action:'create'});
-  didStreamId=stream.id;
-  didSessionId=stream.session_id;
+    // Setup WebRTC
+    const iceServers=stream.ice_servers||[{urls:'stun:stun.l.google.com:19302'}];
+    peerConn=new RTCPeerConnection({iceServers});
 
-  const iceServers=stream.ice_servers||[{urls:'stun:stun.l.google.com:19302'}];
-  peerConn=new RTCPeerConnection({iceServers,sdpSemantics:'unified-plan'});
-
-  // Receive Fanna's video+audio
-  peerConn.ontrack=(e)=>{
-    console.log('ontrack fired:',e.track.kind);
-    if(e.streams&&e.streams[0]){
-      didVideo.srcObject=e.streams[0];
-    } else {
-      // Some browsers don't bundle tracks in streams
-      if(!didVideo.srcObject){
-        const ms=new MediaStream();ms.addTrack(e.track);didVideo.srcObject=ms;
-      } else {
-        didVideo.srcObject.addTrack(e.track);
+    // When we get the video track, attach to video element
+    peerConn.ontrack=(e)=>{
+      if(e.track.kind==='video'){
+        didVideo.srcObject=e.streams[0];
+        didVideo.muted=false;
+        didVideo.play().catch(()=>{});
+        connectOverlay.classList.add('hide');
       }
-    }
-    didVideo.muted=false;
-    didVideo.play().then(()=>{
-      overlay.classList.add('hide');
-      setStatus('ready','Ready');
-      console.log('D-ID video playing!');
-    }).catch(err=>{
-      console.warn('Video autoplay blocked:',err);
-      // Try again on user gesture
-      overlay.innerHTML='<div style="color:#e8b84b;font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;padding:20px" onclick="document.getElementById(\'didVideo\').play();this.parentElement.classList.add(\'hide\')">TAP TO START</div>';
-    });
-  };
+    };
 
-  // ICE
-  peerConn.onicecandidate=(e)=>{
-    if(e.candidate){
-      didCall({
-        action:'ice',streamId:didStreamId,sessionId:didSessionId,
-        candidate:e.candidate.candidate,
-        sdpMid:e.candidate.sdpMid,
-        sdpMLineIndex:e.candidate.sdpMLineIndex,
-      }).catch(()=>{});
-    }
-  };
+    // Send ICE candidates to D-ID
+    peerConn.onicecandidate=(e)=>{
+      if(e.candidate){
+        didCall({
+          action:'ice',
+          streamId:didStreamId,
+          sessionId:didSessionId,
+          candidate:e.candidate.candidate,
+          sdpMid:e.candidate.sdpMid,
+          sdpMLineIndex:e.candidate.sdpMLineIndex,
+        }).catch(()=>{});
+      }
+    };
 
-  peerConn.oniceconnectionstatechange=()=>{
-    console.log('ICE:',peerConn.iceConnectionState);
-    if(peerConn.iceConnectionState==='connected'||peerConn.iceConnectionState==='completed'){
-      // ICE connected — hide overlay even if ontrack hasn't fired yet
-      setTimeout(()=>overlay.classList.add('hide'),500);
-      setStatus('ready','Ready');
-    }
-    if(peerConn.iceConnectionState==='failed'){
-      showErr('Connection lost — refresh to reconnect');
-    }
-  };
+    // Create offer
+    await peerConn.setRemoteDescription(new RTCSessionDescription(stream.offer));
+    const answer=await peerConn.createAnswer();
+    await peerConn.setLocalDescription(answer);
 
-  // Set remote description (D-ID's offer)
-  await peerConn.setRemoteDescription(new RTCSessionDescription(stream.offer));
+    // Send SDP answer
+    await didCall({action:'sdp', streamId:didStreamId, sessionId:didSessionId, offer:answer});
 
-  // Create and send our answer
-  const answer=await peerConn.createAnswer();
-  await peerConn.setLocalDescription(answer);
+    console.log('D-ID stream connected');
+    return true;
 
-  await didCall({action:'sdp',streamId:didStreamId,sessionId:didSessionId,offer:answer});
-  console.log('WebRTC handshake complete');
+  }catch(e){
+    console.error('D-ID init failed:',e);
+    showErr('Could not connect to Fanny — '+e.message);
+    connectOverlay.querySelector('.conn-text').textContent='Connection failed';
+    return false;
+  }
 }
 
-// ── SPEAK via D-ID ──
 async function didTalk(text){
-  if(!didStreamId){console.warn('D-ID not ready');return;}
-  clearTimeout(speakEndTimer);
+  if(!didStreamId||!didSessionId){
+    console.warn('D-ID not connected');return;
+  }
   isSpeaking=true;
-  videoWrap.classList.add('active');
-  ring.className='';ring.classList.add('speak');
-  ibtn.classList.add('show');
+  videoWrap.classList.add('talking');
+  vadRing.classList.remove('listen');
+  vadRing.classList.add('speak');
+  intBtn.classList.add('show');
   setStatus('speak','Fanny is talking…');
   showFannyText(text);
-  try{if(recognition)recognition.stop();}catch(_){}
 
   try{
-    await didCall({action:'talk',streamId:didStreamId,sessionId:didSessionId,text});
-    // Estimate duration from word count (~130ms/word + 600ms buffer)
-    const estMs=Math.max(2000,text.split(' ').length*135+700);
-    speakEndTimer=setTimeout(()=>doneSpeaking(),estMs);
+    await didCall({
+      action:'talk',
+      streamId:didStreamId,
+      sessionId:didSessionId,
+      text,
+      voiceId:ELEVENLABS_VOICE,
+    });
+    // D-ID will stream video — we detect end via video events
+    // Poll for silence as D-ID doesn't have a reliable onend event via REST
+    const checkDone=setInterval(()=>{
+      if(!isSpeaking){clearInterval(checkDone);return;}
+      // Simple heuristic: if video pauses or enough time has passed
+    },500);
+    // Fallback: estimate duration from text length (~120ms per word)
+    const words=text.split(' ').length;
+    const estMs=Math.max(2000, words*130+800);
+    setTimeout(()=>{clearInterval(checkDone);doneSpeaking();},estMs);
   }catch(e){
-    console.error('didTalk error:',e);
-    showErr('Fanny lost her voice — '+e.message.slice(0,80));
+    console.error('D-ID talk error:',e);
     doneSpeaking();
   }
 }
 
 function doneSpeaking(){
-  clearTimeout(speakEndTimer);
   if(!isSpeaking)return;
   isSpeaking=false;
-  videoWrap.classList.remove('active');
-  ring.className='';ring.classList.add('listen');
-  ibtn.classList.remove('show');
+  videoWrap.classList.remove('talking');
+  vadRing.classList.remove('speak');
+  intBtn.classList.remove('show');
   interruptCount=0;
   setMood('listening');
   setStatus('listen','Listening…');
+  vadRing.classList.add('listen');
   finalT='';
-  try{if(recognition&&isListening)recognition.start();}catch(_){}
+  try{if(recognition)recognition.start();}catch(_){}
 }
 
 function interrupt(){
   if(!isSpeaking&&!sending)return;
-  clearTimeout(speakEndTimer);
   interruptCount++;
-  isSpeaking=false;
+  isSpeaking=false; // Stop waiting
   const scolds=["Oi! Let a woman finish!","Blimey, you're rude!","Cor, give us a chance!"];
   if(interruptCount>=3){
     const s=scolds[Math.floor(Math.random()*scolds.length)];
@@ -380,7 +444,7 @@ function interrupt(){
     doneSpeaking();
   }
 }
-ibtn.addEventListener('click',interrupt);
+intBtn.addEventListener('click',interrupt);
 
 // ── CLAUDE ──
 async function askFanny(msg){
@@ -389,7 +453,8 @@ async function askFanny(msg){
   history.push({role:'user',content:msg});
   fannyTextEl.innerHTML='"…"';fannyTextEl.classList.add('show');
   setStatus('think','Thinking…');setMood('thinking');
-  ring.className='';
+  vadRing.classList.remove('listen');
+  try{if(recognition)recognition.stop();}catch(_){}
 
   try{
     const res=await fetch('/.netlify/functions/stream',{
@@ -410,8 +475,8 @@ async function askFanny(msg){
     fannyTextEl.classList.remove('show');
     showErr(e.message);
     setStatus('listen','Ready');
-    ring.className='';ring.classList.add('listen');
-    try{if(recognition&&isListening)recognition.start();}catch(_){}
+    vadRing.classList.add('listen');
+    try{if(recognition)recognition.start();}catch(_){}
     console.error(e);
   }
 }
@@ -425,6 +490,7 @@ function setupVAD(stream){
   src.connect(micAnalyser);
   vadLoop();
 }
+
 function vadLoop(){
   if(!micAnalyser)return;
   const buf=new Uint8Array(micAnalyser.frequencyBinCount);
@@ -433,13 +499,18 @@ function vadLoop(){
   vadFill.style.width=Math.min(100,avg*2.5)+'%';
   if(!vadCalibrated){
     vadSamples.push(avg);
-    if(vadSamples.length>80){noiseFloor=vadSamples.reduce((a,b)=>a+b,0)/vadSamples.length;vadCalibrated=true;}
+    if(vadSamples.length>80){
+      noiseFloor=vadSamples.reduce((a,b)=>a+b,0)/vadSamples.length;
+      vadCalibrated=true;
+    }
     requestAnimationFrame(vadLoop);return;
   }
-  const threshold=Math.max(26,noiseFloor+15);
+  const threshold=Math.max(25,noiseFloor+14);
   const now=Date.now();
   if(avg>threshold){vadLoudCount++;}else{vadLoudCount=Math.max(0,vadLoudCount-1);}
-  if(vadLoudCount>=5&&isSpeaking&&(now-lastInterruptTime)>1500){lastInterruptTime=now;vadLoudCount=0;interrupt();}
+  if(vadLoudCount>=5&&isSpeaking&&(now-lastInterruptTime)>1500){
+    lastInterruptTime=now;vadLoudCount=0;interrupt();
+  }
   requestAnimationFrame(vadLoop);
 }
 
@@ -447,7 +518,7 @@ function vadLoop(){
 function initSpeech(stream){
   setupVAD(stream);
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showErr('Use Chrome or Edge for voice');return;}
+  if(!SR){showErr('Voice not supported — use Chrome or Edge');return;}
   recognition=new SR();
   recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-GB';
   recognition.onresult=e=>{
@@ -466,7 +537,10 @@ function initSpeech(stream){
       const long=finalT.split(' ').length>=5;
       sendTimer=setTimeout(()=>{
         const msg=finalT.trim();
-        if(msg&&!isSpeaking&&!sending){showUserText(msg);finalT='';askFanny(msg);}
+        if(msg&&!isSpeaking&&!sending){
+          showUserText(msg);finalT='';
+          askFanny(msg);
+        }
       },clean?250:long?400:650);
     }
   };
@@ -482,19 +556,21 @@ function initSpeech(stream){
 // ── MIC MODAL ──
 function showMicModal(msg){
   const m=document.createElement('div');
-  m.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:16px';
+  m.style.cssText=`position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:16px`;
   m.innerHTML=`<div style="font-size:40px">🎤</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#e8b84b">Microphone Needed</div>
-    <div style="font-size:13px;color:#ccc;max-width:300px;line-height:1.6">${msg}</div>
-    <button onclick="location.reload()" style="padding:11px 28px;background:#e8b84b;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;color:#0a0f1e">Try Again</button>`;
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#e8b84b">Microphone Needed</div>
+    <div style="font-size:14px;color:#ccc;max-width:300px;line-height:1.6">${msg}</div>
+    <button onclick="location.reload()" style="margin-top:8px;padding:12px 32px;background:#e8b84b;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;color:#0a0f1e">Try Again</button>`;
   document.body.appendChild(m);
 }
 
 // ── BOOT ──
 document.getElementById('startBtn').addEventListener('click',async()=>{
-  document.getElementById('intro').classList.add('fade');
-  setTimeout(()=>document.getElementById('intro').style.display='none',700);
-  setStatus('think','Starting…');
+  const intro=document.getElementById('intro');
+  intro.classList.add('fade');
+  setTimeout(()=>intro.style.display='none',700);
+  setStatus('think','Connecting…');
 
   // Get mic
   let stream;
@@ -502,22 +578,21 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
     stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
   }catch(e){
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-    showMicModal(isIOS?'Go to Settings → Safari → Microphone → Allow, then refresh.':'Click the 🔒 in your address bar → Microphone → Allow → Refresh.');
+    showMicModal(isIOS
+      ?'Go to Settings → Safari → Microphone → Allow, then refresh.'
+      :'Click the 🔒 in your address bar → Microphone → Allow → Refresh.');
     return;
   }
 
-  // Init D-ID WebRTC and speech in parallel
-  initSpeech(stream);
-  try{
-    await initWebRTC();
-  }catch(e){
-    console.error('WebRTC failed:',e);
-    ovtxt.textContent='Connection failed';
-    showErr('Could not connect to Fanna: '+e.message.slice(0,80));
-    return;
-  }
+  // Init D-ID stream and speech in parallel
+  const[didOk]=await Promise.all([
+    initDIDStream(),
+    Promise.resolve(initSpeech(stream))
+  ]);
 
-  // Boot Fanny with opening line
+  if(!didOk){return;}
+
+  // Boot Fanny
   try{
     const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -528,11 +603,13 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
     const{clean,mood}=parseReply(raw);
     history.push({role:'assistant',content:raw});
     setMood(mood||'excited');
+    setStatus('ready','Ready');
     didTalk(clean);
   }catch(e){
     const fallback="Alright, I'm Fanny — best football brain in London, so what's your name then?";
     history.push({role:'assistant',content:fallback});
     setMood('excited');
+    setStatus('ready','Ready');
     didTalk(fallback);
     console.warn(e);
   }
