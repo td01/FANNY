@@ -138,6 +138,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <div id="pulseRing"></div>
 <div id="orbWrap">
   <canvas id="orbCanvas" width="200" height="200"></canvas>
+  <canvas id="faceCanvas" width="200" height="200"></canvas>
   <div id="moodLabel">Ready…</div>
 </div>
 <div id="fannyText"></div>
@@ -148,18 +149,29 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <div id="errMsg"></div>
 
 <script>
-const SYSTEM=`You are Fanny — a passionate, loud, funny Cockney football fan in a pub debate about World Cup 2026. 
-Rules:
-- MAXIMUM 1-2 short sentences. Pub banter is quick-fire.
-- Cockney: "blimey","cor","ain't","mate","you 'avin a laugh","sorted","proper" etc.
-- Strong opinions. Never neutral. Hot takes always.
-- If interrupted mid-flow say "Oi! Let me finish!" or "Blimey, rude!" but keep going.
-- World Cup 2026: USA/Canada/Mexico, 48 teams, groups of 3. Favourites: Brazil, France, England, Argentina, Spain, Germany.
-- Stars: Vinicius, Mbappé, Bellingham, Rodri, Salah etc.
-- Ask short follow-up questions to keep debate alive.
-- NO lists. NO bullet points. Talk like a real person.
-- End each reply with ONE tag: [MOOD:excited|sceptical|laughing|furious|thinking|impressed]
-- If country mentioned first time add: [TEAM:CountryName]`;
+const SYSTEM=`You are Fanny — the sharpest, funniest, most opinionated Cockney football fan in any pub in London. You've got a mouth like a market trader and opinions like a tabloid back page. You LOVE a debate and you never, ever back down.
+
+CONVERSATION FLOW:
+- First message: Ask for their name warmly and briefly.
+- Once you know their name: React with a warm, funny Cockney greeting (e.g. "Oh lovely, [NAME]!" or "Ha, nice one [NAME]!" or "Alright [NAME], pull up a stool!") then immediately ask what country they're backing.
+- After that: Use their name naturally but sparingly — once every 3-4 exchanges, like a real person would. Never robotically repeat it.
+
+STRICT RULES:
+- MAX 2 sentences. Usually just 1. Banter is rapid fire.
+- Be SHARP and WITTY. Think quick-fire roast, not lecture.
+- Cockney flavour always: "blimey", "cor", "ain't", "you 'avin a laugh", "pull the other one", "do me a favour", "straight up", "sorted", "on yer bike", "what a load of old tosh" etc.
+- NEVER be neutral. Pick a side and die on that hill.
+- Mock weak teams mercilessly but with charm: "Bless their cotton socks", "they couldn't score in a bowling alley".
+- Celebrate strong teams with genuine passion: "That Vinicius makes me wanna cry happy tears, mate."
+- React to what the user ACTUALLY said — be specific, not generic.
+- Throw in stats, player names, historical moments to back up your argument.
+- End with a cheeky question or challenge to keep them talking.
+- World Cup 2026: USA/Canada/Mexico, 48 teams, groups of 3.
+- Stars: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Salah, Lewandowski, Haaland (Norway — didn't qualify, very sore point).
+- If interrupted: "Oi! I was just gettin' to the good bit!" or "Blimey, let a woman finish!"
+- End every reply with ONE tag: [MOOD:excited|sceptical|laughing|furious|thinking|impressed]
+- If country named first time add: [TEAM:CountryName]
+- If user's name learned add: [NAME:TheirName]`;
 
 const COUNTRY_THEMES={
   england:{c1:'#08121e',c2:'#0d1f35',accent:'#cf142b',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
@@ -187,6 +199,18 @@ const pulseRing=document.getElementById('pulseRing');
 const orbWrap=document.getElementById('orbWrap');
 const orbCanvas=document.getElementById('orbCanvas');
 const orbCtx=orbCanvas.getContext('2d');
+const faceCanvas=document.getElementById('faceCanvas');
+const faceCtx=faceCanvas.getContext('2d');
+
+// Face state
+let mouthOpen=0;       // 0-1 how open the mouth is
+let mouthTarget=0;     // target openness
+let blinkState=1;      // 1=open 0=closed
+let blinkTimer=0;
+let eyeShiftX=0, eyeShiftY=0; // subtle eye wander
+let eyeTargetX=0, eyeTargetY=0;
+let currentMood='idle';
+let faceAnimId=null;
 const fannyTextEl=document.getElementById('fannyText');
 const userTextEl=document.getElementById('userText');
 const sdot=document.getElementById('sdot');
@@ -245,7 +269,10 @@ function showErr(msg){
 // ── MOOD ──
 const MOOD_LABELS={excited:'Buzzing!',sceptical:'Really though…',laughing:'Hahaha!',
   furious:'Outrageous!',thinking:'Hmm…',impressed:'Fair play!',idle:'Ready…',listening:'Listening…'};
-function setMood(m){moodLabel.textContent=MOOD_LABELS[m]||'Ready…';}
+function setMood(m){
+  currentMood=m||'idle';
+  moodLabel.textContent=MOOD_LABELS[currentMood]||'Ready…';
+}
 
 // ── TEXT DISPLAY ──
 let wordRevealTimer=null;
@@ -291,50 +318,235 @@ function showUserText(t,dim=false){
 // ── ORB DRAWING ──
 function getAccent(){return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';}
 
+// ── FACE DRAWING ──
+const MOUTH_SHAPES={
+  // [widthMultiplier, heightMultiplier, cornerCurve]
+  idle:    [0.28, 0.04, 0.5],
+  small:   [0.30, 0.10, 0.6],
+  medium:  [0.34, 0.20, 0.5],
+  open:    [0.36, 0.30, 0.4],
+  wide:    [0.38, 0.38, 0.3],
+};
+
+function getMouthShape(openAmt){
+  if(openAmt<0.05) return MOUTH_SHAPES.idle;
+  if(openAmt<0.25) return MOUTH_SHAPES.small;
+  if(openAmt<0.5)  return MOUTH_SHAPES.medium;
+  if(openAmt<0.75) return MOUTH_SHAPES.open;
+  return MOUTH_SHAPES.wide;
+}
+
+function drawFace(){
+  const W=200,H=200,cx=100,cy=100;
+  const acc=getAccent();
+  faceCtx.clearRect(0,0,W,H);
+
+  // Smooth mouth and eyes
+  mouthOpen+=(mouthTarget-mouthOpen)*0.25;
+  eyeShiftX+=(eyeTargetX-eyeShiftX)*0.08;
+  eyeShiftY+=(eyeTargetY-eyeShiftY)*0.08;
+
+  // ── EYES ──
+  const eyeY=cy-14;
+  const eyeSpacing=20;
+  const eyeR=9;
+  const pupilR=5;
+  const blinkH=blinkState*eyeR;
+
+  // Eye whites
+  [-1,1].forEach(side=>{
+    const ex=cx+(side*eyeSpacing);
+    faceCtx.beginPath();
+    faceCtx.ellipse(ex,eyeY,eyeR,Math.max(1,blinkH),0,0,Math.PI*2);
+    faceCtx.fillStyle='white';
+    faceCtx.fill();
+
+    // Pupil
+    if(blinkState>0.3){
+      const px=ex+eyeShiftX*3;
+      const py=eyeY+eyeShiftY*2;
+      faceCtx.beginPath();
+      faceCtx.arc(px,py,pupilR*blinkState,0,Math.PI*2);
+      faceCtx.fillStyle='#1a0800';
+      faceCtx.fill();
+      // Glint
+      faceCtx.beginPath();
+      faceCtx.arc(px+1.5,py-1.5,1.5,0,Math.PI*2);
+      faceCtx.fillStyle='white';
+      faceCtx.fill();
+    }
+  });
+
+  // Eyebrows — change with mood
+  const browLift=currentMood==='furious'?3:currentMood==='excited'?-3:currentMood==='sceptical'?2:0;
+  const browAngle=currentMood==='furious'?0.3:currentMood==='sceptical'?-0.15:0;
+  [-1,1].forEach(side=>{
+    const bx=cx+(side*eyeSpacing);
+    const by=eyeY-14+browLift;
+    faceCtx.beginPath();
+    faceCtx.moveTo(bx-8,by+(side*browAngle*4));
+    faceCtx.quadraticCurveTo(bx,by-2,bx+8,by-(side*browAngle*4));
+    faceCtx.strokeStyle=acc;
+    faceCtx.lineWidth=2.5;
+    faceCtx.lineCap='round';
+    faceCtx.globalAlpha=0.85;
+    faceCtx.stroke();
+    faceCtx.globalAlpha=1;
+  });
+
+  // ── MOUTH ──
+  const mouthY=cy+26;
+  const [wMult,hMult]=getMouthShape(mouthOpen);
+  const mw=76*wMult;
+  const mh=76*hMult;
+
+  // Lip shadow/depth
+  if(mouthOpen>0.05){
+    faceCtx.beginPath();
+    faceCtx.ellipse(cx,mouthY+2,mw*0.9,Math.max(2,mh*0.85),0,0,Math.PI*2);
+    faceCtx.fillStyle='#1a0800';
+    faceCtx.fill();
+  }
+
+  // Upper lip
+  faceCtx.beginPath();
+  faceCtx.moveTo(cx-mw,mouthY);
+  faceCtx.bezierCurveTo(cx-mw*0.5,mouthY-mh*0.5, cx+mw*0.5,mouthY-mh*0.5, cx+mw,mouthY);
+  faceCtx.strokeStyle=acc;
+  faceCtx.lineWidth=2.5;
+  faceCtx.globalAlpha=0.9;
+  faceCtx.stroke();
+
+  // Lower lip
+  faceCtx.beginPath();
+  faceCtx.moveTo(cx-mw,mouthY);
+  faceCtx.bezierCurveTo(cx-mw*0.5,mouthY+mh, cx+mw*0.5,mouthY+mh, cx+mw,mouthY);
+  faceCtx.strokeStyle=acc;
+  faceCtx.lineWidth=2.5;
+  faceCtx.stroke();
+
+  // Fill mouth opening
+  if(mouthOpen>0.05){
+    faceCtx.beginPath();
+    faceCtx.moveTo(cx-mw,mouthY);
+    faceCtx.bezierCurveTo(cx-mw*0.5,mouthY-mh*0.5, cx+mw*0.5,mouthY-mh*0.5, cx+mw,mouthY);
+    faceCtx.bezierCurveTo(cx+mw*0.5,mouthY+mh, cx-mw*0.5,mouthY+mh, cx-mw,mouthY);
+    faceCtx.fillStyle='rgba(26,8,0,0.85)';
+    faceCtx.fill();
+    faceCtx.globalAlpha=1;
+
+    // Teeth (top row only when wide open)
+    if(mouthOpen>0.4){
+      faceCtx.beginPath();
+      faceCtx.ellipse(cx,mouthY+1,mw*0.65,mh*0.22,0,0,Math.PI*2);
+      faceCtx.fillStyle='rgba(255,252,240,0.9)';
+      faceCtx.fill();
+    }
+  }
+  faceCtx.globalAlpha=1;
+
+  // Nose dot
+  faceCtx.beginPath();
+  faceCtx.arc(cx,cy+8,2.5,0,Math.PI*2);
+  faceCtx.fillStyle=acc;
+  faceCtx.globalAlpha=0.4;
+  faceCtx.fill();
+  faceCtx.globalAlpha=1;
+}
+
+function startFaceAnim(){
+  if(faceAnimId)return;
+  // Random blink scheduling
+  function scheduleBlink(){
+    blinkTimer=setTimeout(()=>{
+      // Close
+      let t=0;
+      const close=setInterval(()=>{blinkState=Math.max(0,1-t);t+=0.25;if(t>=1)clearInterval(close);},16);
+      // Open after 120ms
+      setTimeout(()=>{
+        let t2=0;
+        const open=setInterval(()=>{blinkState=Math.min(1,t2);t2+=0.2;if(t2>=1)clearInterval(open);},16);
+      },120);
+      scheduleBlink();
+    },2500+Math.random()*3000);
+  }
+  scheduleBlink();
+
+  // Random eye wander
+  function wanderEyes(){
+    eyeTargetX=(Math.random()-0.5)*0.8;
+    eyeTargetY=(Math.random()-0.5)*0.4;
+    setTimeout(wanderEyes,1500+Math.random()*2500);
+  }
+  wanderEyes();
+
+  function faceLoop(){
+    faceAnimId=requestAnimationFrame(faceLoop);
+    drawFace();
+  }
+  faceLoop();
+}
+
+function stopFaceAnim(){
+  if(faceAnimId){cancelAnimationFrame(faceAnimId);faceAnimId=null;}
+  if(blinkTimer)clearTimeout(blinkTimer);
+}
+
+// Drive mouth from audio analyser
+function updateMouthFromAudio(){
+  if(analyser&&isSpeaking){
+    const buf=new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(buf);
+    // Focus on speech frequencies (300-3000hz range)
+    const speechBins=buf.slice(2,20);
+    const avg=speechBins.reduce((a,b)=>a+b,0)/speechBins.length;
+    mouthTarget=Math.min(1,avg/90);
+  } else if(isSpeaking){
+    // Fake mouth movement when no analyser
+    mouthTarget=0.3+0.5*Math.abs(Math.sin(fakePhase*3));
+  } else {
+    mouthTarget=0;
+  }
+}
+
 function drawOrbIdle(){
   const W=200,H=200,cx=100,cy=100,acc=getAccent();
   orbCtx.clearRect(0,0,W,H);
-  // bg circle
   orbCtx.beginPath();orbCtx.arc(cx,cy,76,0,Math.PI*2);
-  orbCtx.fillStyle='rgba(0,0,0,.4)';orbCtx.fill();
-  // ring
+  const grad=orbCtx.createRadialGradient(cx-20,cy-20,10,cx,cy,76);
+  grad.addColorStop(0,'rgba(40,40,60,0.9)');
+  grad.addColorStop(1,'rgba(10,10,20,0.95)');
+  orbCtx.fillStyle=grad;orbCtx.fill();
   orbCtx.beginPath();orbCtx.arc(cx,cy,74,0,Math.PI*2);
-  orbCtx.strokeStyle=acc;orbCtx.globalAlpha=.18;orbCtx.lineWidth=1.5;orbCtx.stroke();
-  orbCtx.globalAlpha=1;
-  // F letter
-  orbCtx.font='bold 72px "Bebas Neue",sans-serif';
-  orbCtx.fillStyle=acc;orbCtx.globalAlpha=.85;
-  orbCtx.textAlign='center';orbCtx.textBaseline='middle';
-  orbCtx.fillText('F',cx,cy+4);
+  orbCtx.strokeStyle=acc;orbCtx.globalAlpha=.2;orbCtx.lineWidth=1.5;orbCtx.stroke();
   orbCtx.globalAlpha=1;
 }
 
 function drawOrbWave(buf,fake){
   const W=200,H=200,cx=100,cy=100,acc=getAccent();
   orbCtx.clearRect(0,0,W,H);
+  const grad=orbCtx.createRadialGradient(cx-20,cy-20,10,cx,cy,76);
+  grad.addColorStop(0,'rgba(40,40,60,0.9)');
+  grad.addColorStop(1,'rgba(10,10,20,0.95)');
   orbCtx.beginPath();orbCtx.arc(cx,cy,76,0,Math.PI*2);
-  orbCtx.fillStyle='rgba(0,0,0,.4)';orbCtx.fill();
+  orbCtx.fillStyle=grad;orbCtx.fill();
+
+  updateMouthFromAudio();
 
   const bars=72;
   for(let i=0;i<bars;i++){
     const angle=(i/bars)*Math.PI*2-Math.PI/2;
     let v;
-    if(fake){v=0.15+0.7*Math.abs(Math.sin(fakePhase+i*.18));}
-    else{v=(buf[Math.floor(i*buf.length/bars)]||0)/255;}
-    const inner=70,outer=inner+3+v*28;
+    if(fake){v=0.1+0.5*Math.abs(Math.sin(fakePhase+i*.18));}
+    else{v=(buf&&buf[Math.floor(i*buf.length/bars)]||0)/255;}
+    const inner=72,outer=inner+2+v*24;
     orbCtx.beginPath();
     orbCtx.moveTo(cx+Math.cos(angle)*inner,cy+Math.sin(angle)*inner);
     orbCtx.lineTo(cx+Math.cos(angle)*outer,cy+Math.sin(angle)*outer);
     orbCtx.strokeStyle=acc;
-    orbCtx.globalAlpha=Math.max(.1,v*.9);
+    orbCtx.globalAlpha=Math.max(.08,v*.85);
     orbCtx.lineWidth=2;orbCtx.stroke();
   }
-  orbCtx.globalAlpha=1;
-  // F always visible
-  orbCtx.font='bold 52px "Bebas Neue",sans-serif';
-  orbCtx.fillStyle=acc;orbCtx.globalAlpha=.5;
-  orbCtx.textAlign='center';orbCtx.textBaseline='middle';
-  orbCtx.fillText('F',cx,cy+3);
   orbCtx.globalAlpha=1;
 }
 
@@ -350,10 +562,14 @@ function animateWave(){
   }
 }
 
-function startOrbAnim(){if(!waveAnimId)animateWave();}
+function startOrbAnim(){
+  if(!waveAnimId)animateWave();
+  startFaceAnim();
+}
 function stopOrbAnim(){
   if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}
   drawOrbIdle();
+  mouthTarget=0;
 }
 
 // ── VAD (Voice Activity Detection) ──
@@ -409,7 +625,7 @@ function vadLoop(){
 
 // ── AUDIO PLAYBACK ──
 let _currentSpeakText='';
-async function speak(text){
+async function speak(text, skipText=false){
   _currentSpeakText=text;
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   isSpeaking=true;
@@ -424,8 +640,8 @@ async function speak(text){
   intBtn.classList.add('show');
   setStatus('speak','Fanny is talking…');
 
-  // Show text immediately — no waiting for audio
-  showFannyText(text);
+  // Show text immediately — no waiting for audio (unless already shown)
+  if(!skipText) showFannyText(text);
   startOrbAnim();
 
   try{
@@ -521,58 +737,30 @@ function interrupt(){
 intBtn.addEventListener('click',interrupt);
 
 // ── CLAUDE ──
+let userName=null;
 function parseReply(raw){
   const mM=raw.match(/\[MOOD:(\w+)\]/i);
   const tM=raw.match(/\[TEAM:([^\]]+)\]/i);
-  const clean=raw.replace(/\[MOOD:[^\]]+\]/gi,'').replace(/\[TEAM:[^\]]+\]/gi,'').trim();
+  const nM=raw.match(/\[NAME:([^\]]+)\]/i);
+  if(nM&&!userName){userName=nM[1].trim();console.log('Name learned:',userName);}
+  const clean=raw.replace(/\[MOOD:[^\]]+\]/gi,'')
+                  .replace(/\[TEAM:[^\]]+\]/gi,'')
+                  .replace(/\[NAME:[^\]]+\]/gi,'').trim();
   return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
 }
 
-// Pre-cached Lizzie filler audio blobs — fetched at boot
-const FILLER_TEXTS=["Hmm!","Ooh!","Ha!","Right!"];
-let fillerBlobs=[], fillerReady=false;
-
-async function prefetchFillers(){
-  try{
-    const promises=FILLER_TEXTS.map(t=>
-      fetch('/.netlify/functions/speak',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:t})
-      }).then(r=>r.json()).then(d=>{
-        if(d.audio){
-          const bytes=Uint8Array.from(atob(d.audio),c=>c.charCodeAt(0));
-          return new Blob([bytes],{type:'audio/mpeg'});
-        }
-        return null;
-      }).catch(()=>null)
-    );
-    fillerBlobs=(await Promise.all(promises)).filter(Boolean);
-    fillerReady=fillerBlobs.length>0;
-    console.log('Fillers ready:',fillerBlobs.length);
-  }catch(e){console.warn('Filler prefetch failed:',e);}
-}
-
-let fillerAudio=null;
 function playFiller(){
-  // Visual signal always
-  fannyTextEl.textContent='"…"';
+  // Pure visual — orb pulses, thinking dots appear
+  fannyTextEl.innerHTML='<span style="opacity:.5">&#8220;</span><span id="thinkDots">•</span><span style="opacity:.5">&#8221;</span>';
   fannyTextEl.classList.add('show');
-  orbWrap.style.transform='translate(-50%,-50%) scale(1.04)';
-  setTimeout(()=>orbWrap.style.transform='',200);
-  
-  // Play cached Lizzie filler if ready
-  if(fillerReady&&fillerBlobs.length>0){
-    const blob=fillerBlobs[Math.floor(Math.random()*fillerBlobs.length)];
-    const url=URL.createObjectURL(blob);
-    fillerAudio=new Audio(url);
-    fillerAudio.volume=0.9;
-    fillerAudio.play().catch(()=>{});
-    fillerAudio.onended=()=>URL.revokeObjectURL(url);
-  }
+  let d=0;const dotStates=['•','••','•••'];
+  window._dotTimer=setInterval(()=>{d=(d+1)%3;const el=document.getElementById('thinkDots');if(el)el.textContent=dotStates[d];},300);
+  orbWrap.style.transform='translate(-50%,-50%) scale(1.05)';
+  setTimeout(()=>orbWrap.style.transform='',300);
 }
 
 function stopFiller(){
-  if(fillerAudio){fillerAudio.pause();fillerAudio=null;}
+  if(window._dotTimer){clearInterval(window._dotTimer);window._dotTimer=null;}
 }
 
 async function askFanny(msg){
@@ -596,7 +784,7 @@ async function askFanny(msg){
   try{
     const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM,messages:history})
+      body:JSON.stringify({system:SYSTEM,messages:history}),keepalive:true
     });
     const data=await res.json();
     if(!res.ok||data.error)throw new Error(data.error?.message||data.error||'API error');
@@ -607,7 +795,9 @@ async function askFanny(msg){
     setMood(mood);
     sending=false;
     stopFiller();
-    speak(clean);
+    // Show text instantly, fire audio fetch in parallel — no sequential wait
+    showFannyText(clean);
+    speak(clean, true); // true = skip showFannyText inside speak (already done)
   }catch(e){
     sending=false;
     fannyTextEl.classList.remove('show');
@@ -706,6 +896,7 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
 
   setStatus('think','Starting…');
   drawOrbIdle();
+  startFaceAnim();
   startOrbAnim();
 
   // Get mic first so VAD and speech both use same stream
@@ -732,22 +923,20 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
   }
 
   initSpeech(stream);
-  prefetchFillers(); // pre-cache Lizzie filler sounds
-
   // Boot Fanny
   try{
     const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Say hi, introduce yourself as Fanny in one sentence, then ask what country I'm backing. One sentence total. Cockney."}]})
+      body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Introduce yourself as Fanny in one punchy Cockney sentence, then ask for their name. Max 1 sentence."}]})
     });
     const data=await res.json();
-    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Alright mate, I'm Fanny — so who you backin' this summer?";
+    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Alright, I'm Fanny — best football brain in the pub. What's your name then?";
     const{clean,mood}=parseReply(raw);
     history.push({role:'assistant',content:raw});
     setMood(mood||'excited');
     speak(clean);
   }catch(e){
-    const fallback="Alright mate, I'm Fanny — so who you backin' this summer?";
+    const fallback="Alright, I'm Fanny — best football brain in the pub. What's your name then?";
     history.push({role:'assistant',content:fallback});
     setMood('excited');
     speak(fallback);
