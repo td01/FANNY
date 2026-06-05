@@ -1,5 +1,3 @@
-// D-ID Agents Streams API proxy
-// Uses /agents/{agentId}/streams — the modern endpoint for agent avatars
 const DID_API = 'https://api.d-id.com';
 const AGENT_ID = 'v2_agt_DVc2eLPi';
 
@@ -14,20 +12,35 @@ exports.handler = async function(event) {
 
   const { action, streamId, sessionId, offer, text } = body;
 
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Basic ${DID_KEY}`,
+  };
+
   try {
     let url, method = 'POST', payload;
 
     switch(action) {
+
+      // Get a client key for the frontend SDK
+      case 'client-key':
+        url = `${DID_API}/agents/client-key`;
+        payload = { allowed_domains: ['https://fannywc2.netlify.app', 'http://localhost:3000'] };
+        break;
+
+      // Create agent stream (returns offer + ICE servers)
       case 'create':
         url = `${DID_API}/agents/${AGENT_ID}/streams`;
         payload = {};
         break;
 
+      // SDP answer
       case 'sdp':
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/sdp`;
         payload = { answer: offer, session_id: sessionId };
         break;
 
+      // ICE candidate
       case 'ice':
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/ice`;
         payload = {
@@ -38,8 +51,8 @@ exports.handler = async function(event) {
         };
         break;
 
+      // Send text — uses streams speak endpoint (bypasses D-ID LLM, uses our text)
       case 'talk':
-        // Send text to agent stream — D-ID handles TTS internally via agent config
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}`;
         payload = {
           script: {
@@ -47,7 +60,7 @@ exports.handler = async function(event) {
             input: text,
             provider: {
               type: 'elevenlabs',
-              voice_id: 'EQx6HGDYjkDpcli6vorJ', // Lizzie
+              voice_id: 'EQx6HGDYjkDpcli6vorJ',
               model_id: 'eleven_turbo_v2_5',
               voice_config: { stability: 0.4, similarity_boost: 0.75, style: 0.4 }
             }
@@ -69,10 +82,7 @@ exports.handler = async function(event) {
 
     const res = await fetch(url, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${DID_KEY}`,
-      },
+      headers,
       body: payload && Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined,
     });
 
