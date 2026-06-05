@@ -19,10 +19,12 @@ exports.handler = async function(event) {
       case 'create':
         url = `${DID_API}/talks/streams`;
         payload = {
-          source_url: `https://clips.d-id.com/${body.presenterId}.jpg`,
           presenter_id: body.presenterId,
           driver_id: 'uM00QMww2Re',
-          face: { size: 1 },
+          face: {
+            top_left: [0, 0],
+            size: 512,
+          },
           config: { stitch: true, fluent: true, auto_match: true },
         };
         break;
