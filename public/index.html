@@ -289,7 +289,7 @@ async function initWebRTC(){
     }).catch(err=>{
       console.warn('Video autoplay blocked:',err);
       // Try again on user gesture
-      overlay.innerHTML='<div style="color:#e8b84b;font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;padding:20px" onclick="document.getElementById('didVideo').play();this.parentElement.classList.add('hide')">TAP TO START</div>';
+      overlay.innerHTML='<div style="color:#e8b84b;font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;padding:20px" onclick="document.getElementById(\'didVideo\').play();this.parentElement.classList.add(\'hide\')">TAP TO START</div>';
     });
   };
 
