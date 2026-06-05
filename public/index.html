@@ -9,8 +9,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --c1:#0c0e14;--c2:#13161f;--accent:#e8b84b;--text:#eceae0;--muted:rgba(240,237,228,.45);
-  --tr:1s;
+  --c1:#0c0e14;--c2:#13161f;--accent:#e8b84b;--text:#eceae0;--muted:rgba(240,237,228,.45);--tr:1.2s;
 }
 html,body{height:100%;overflow:hidden;background:var(--c1);color:var(--text);font-family:'Barlow',sans-serif}
 body{display:flex;flex-direction:column;height:100dvh}
@@ -18,94 +17,121 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,.018) 60px,rgba(255,255,255,.018) 61px);
   pointer-events:none}
 
-/* BG */
 #bg{position:fixed;inset:0;z-index:0;transition:background var(--tr) ease;
   background:radial-gradient(ellipse at 40% 50%,var(--c2) 0%,var(--c1) 70%)}
 
-/* LOGO */
 .logo{position:fixed;top:20px;left:24px;z-index:10;
-  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);opacity:.6;
-  transition:color var(--tr)}
+  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--accent);opacity:.6}
 
-/* COUNTRY */
 .ctry{position:fixed;top:16px;right:24px;z-index:10;
   display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .6s}
 .ctry.show{opacity:1}
-.ctry-flag{font-size:26px}
-.ctry-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);transition:color var(--tr)}
+.ctry-flag{font-size:26px}.ctry-name{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
 
-/* ORB */
-#orbWrap{
+/* ── D-ID VIDEO ── */
+#videoWrap{
   position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
-  z-index:5;display:flex;flex-direction:column;align-items:center;
-  transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
-#orbWrap.talking{transform:translate(-50%,-54%)}
-#orbWrap.listening{transform:translate(-50%,-48%)}
+  z-index:5;
+  width:min(340px,80vw);
+  aspect-ratio:9/16;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 0 1px rgba(232,184,75,.15);
+  background:#0a0a0a;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1), box-shadow .6s;
+}
+#videoWrap.talking{
+  box-shadow:0 0 80px rgba(232,184,75,.25), 0 0 0 2px rgba(232,184,75,.4);
+}
 
-#orbCanvas{border-radius:50%;display:block}
+#didVideo{
+  width:100%;height:100%;object-fit:cover;
+  display:block;
+}
 
-#moodLabel{margin-top:10px;font-family:'Bebas Neue',sans-serif;font-size:14px;
-  letter-spacing:3px;color:var(--accent);opacity:.65;text-align:center;transition:color var(--tr)}
+/* connecting overlay */
+#connectOverlay{
+  position:absolute;inset:0;
+  background:rgba(10,10,20,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  z-index:6;transition:opacity .5s;
+}
+#connectOverlay.hide{opacity:0;pointer-events:none}
+.conn-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid rgba(232,184,75,.2);
+  border-top-color:var(--accent);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.conn-text{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
 
-/* PULSE RING */
-#pulseRing{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
-  width:220px;height:220px;border-radius:50%;border:1.5px solid var(--accent);
-  opacity:0;pointer-events:none;z-index:4;transition:border-color var(--tr)}
-#pulseRing.speak{animation:rpulse 1.2s infinite ease-out}
-#pulseRing.listen{animation:rpulse 2.4s infinite ease-out;border-color:rgba(255,255,255,.2)}
-@keyframes rpulse{0%{transform:translate(-50%,-50%) scale(1);opacity:.5}100%{transform:translate(-50%,-50%) scale(2);opacity:0}}
+/* mood badge on video */
+#moodBadge{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.65);backdrop-filter:blur(8px);
+  border:1px solid rgba(232,184,75,.3);border-radius:20px;
+  padding:4px 14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);z-index:7;transition:all .4s;white-space:nowrap;
+}
 
-/* FANNY TEXT */
+/* VAD ring around video */
+#vadRing{
+  position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);
+  width:min(360px,84vw);
+  aspect-ratio:1/1;
+  border-radius:50%;
+  border:2px solid var(--accent);
+  opacity:0;pointer-events:none;z-index:4;
+  transition:border-color var(--tr);
+}
+#vadRing.listen{animation:vadpulse 2s infinite ease-out}
+#vadRing.speak{animation:vadpulse 1s infinite ease-out;border-color:rgba(232,184,75,.6)}
+@keyframes vadpulse{0%{opacity:.4;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.15)}}
+
+/* TEXT */
 #fannyText{
-  position:fixed;left:8%;right:8%;top:6vh;
-  text-align:center;font-size:clamp(16px,2.8vw,30px);font-weight:300;font-style:italic;
-  line-height:1.45;color:var(--text);opacity:0;transform:translateY(-8px);
+  position:fixed;left:6%;right:6%;top:5vh;
+  text-align:center;font-size:clamp(15px,2.5vw,26px);font-weight:300;font-style:italic;
+  line-height:1.5;color:var(--text);opacity:0;transform:translateY(-8px);
   transition:opacity .4s,transform .4s;pointer-events:none;z-index:6}
 #fannyText.show{opacity:1;transform:translateY(0)}
+.fw{display:inline-block}
 
-/* USER TEXT */
 #userText{
-  position:fixed;left:8%;right:8%;bottom:80px;
-  text-align:center;font-size:clamp(14px,2.2vw,22px);font-weight:700;letter-spacing:.5px;
+  position:fixed;left:6%;right:6%;bottom:72px;
+  text-align:center;font-size:clamp(13px,2vw,20px);font-weight:700;letter-spacing:.5px;
   color:var(--accent);opacity:0;transform:translateY(8px);
   transition:opacity .3s,transform .3s,color var(--tr);pointer-events:none;z-index:6}
 #userText.show{opacity:1;transform:translateY(0)}
-#userText.dim{opacity:.45;font-style:italic;font-weight:400}
+#userText.dim{opacity:.4;font-style:italic;font-weight:400}
 
 /* STATUS */
 #statusBar{
-  position:fixed;bottom:0;left:0;right:0;height:56px;z-index:10;
-  display:flex;align-items:center;justify-content:center;gap:12px;
-  background:rgba(0,0,0,.35);backdrop-filter:blur(12px);
+  position:fixed;bottom:0;left:0;right:0;height:52px;z-index:10;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(12px);
   border-top:1px solid rgba(255,255,255,.05)}
 #sdot{width:7px;height:7px;border-radius:50%;background:#333;transition:background .3s;flex-shrink:0}
 #sdot.ready{background:#22c55e}
-#sdot.listen{background:var(--accent);animation:dp .8s infinite;transition:background var(--tr)}
+#sdot.listen{background:var(--accent);animation:dp .8s infinite}
 #sdot.think{background:#a78bfa;animation:dp 1s infinite}
 #sdot.speak{background:#60a5fa;animation:dp .9s infinite}
 @keyframes dp{0%,100%{opacity:1}50%{opacity:.2}}
 #statusMsg{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);min-width:140px;text-align:center}
 
-/* INTERRUPT */
 #intBtn{
-  position:fixed;bottom:68px;right:20px;z-index:11;
-  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.5);color:rgba(255,255,255,.35);font-size:14px;
+  position:fixed;bottom:60px;right:20px;z-index:11;
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.5);color:rgba(255,255,255,.35);font-size:13px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .3s;letter-spacing:0}
+  opacity:0;transition:opacity .3s}
 #intBtn.show{opacity:1}
 #intBtn:hover{background:rgba(255,255,255,.08);color:white}
 
-/* VAD indicator */
-#vadBar{
-  position:fixed;bottom:56px;left:0;right:0;height:2px;
-  background:transparent;z-index:9;transition:background .1s}
-#vadFill{height:100%;width:0%;background:var(--accent);transition:width .08s,background var(--tr)}
+#vadBar{position:fixed;bottom:52px;left:0;right:0;height:2px;background:transparent;z-index:9}
+#vadFill{height:100%;width:0%;background:var(--accent);transition:width .08s}
 
-/* Word fade */
-.fw{display:inline-block}
-
-/* ERROR */
 #errMsg{position:fixed;top:56px;left:50%;transform:translateX(-50%);
   background:rgba(160,20,20,.95);border-radius:8px;padding:8px 18px;
   font-size:12px;color:white;z-index:20;display:none;max-width:80%;text-align:center}
@@ -122,10 +148,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   font-size:20px;letter-spacing:3px;cursor:pointer;transition:all .2s}
 .ib:hover{background:var(--accent);color:#0a0f1e}
 .in{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:6px}
+
+@media(max-width:480px){
+  #videoWrap{width:88vw;top:44%}
+  #vadRing{width:92vw}
+}
 </style>
 </head>
 <body>
 <div id="bg"></div>
+
 <div id="intro">
   <div class="il">FANNY</div>
   <div class="is">World Cup 2026 · Fan Debater</div>
@@ -135,12 +167,18 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 
 <div class="logo">FANNY ⚽</div>
 <div class="ctry" id="ctry"><span class="ctry-flag" id="ctryFlag"></span><span class="ctry-name" id="ctryName"></span></div>
-<div id="pulseRing"></div>
-<div id="orbWrap">
-  <canvas id="orbCanvas" width="200" height="200"></canvas>
-  <canvas id="faceCanvas" width="200" height="200"></canvas>
-  <div id="moodLabel">Ready…</div>
+
+<div id="vadRing"></div>
+
+<div id="videoWrap">
+  <video id="didVideo" autoplay playsinline muted></video>
+  <div id="connectOverlay">
+    <div class="conn-spinner"></div>
+    <div class="conn-text">Connecting to Fanny…</div>
+  </div>
+  <div id="moodBadge">Ready…</div>
 </div>
+
 <div id="fannyText"></div>
 <div id="userText"></div>
 <div id="vadBar"><div id="vadFill"></div></div>
@@ -149,29 +187,31 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 <div id="errMsg"></div>
 
 <script>
+const PRESENTER_ID = 'v2_agt_DVc2eLPi';
+const ELEVENLABS_VOICE = 'EQx6HGDYjkDpcli6vorJ'; // Lizzie
+
 const SYSTEM=`You are Fanny — the sharpest, funniest, most opinionated Cockney football fan in any pub in London. You've got a mouth like a market trader and opinions like a tabloid back page. You LOVE a debate and you never, ever back down.
 
 CONVERSATION FLOW:
-- First message: Ask for their name warmly and briefly.
-- Once you know their name: React with a warm, funny Cockney greeting (e.g. "Oh lovely, [NAME]!" or "Ha, nice one [NAME]!" or "Alright [NAME], pull up a stool!") then immediately ask what country they're backing.
-- After that: Use their name naturally but sparingly — once every 3-4 exchanges, like a real person would. Never robotically repeat it.
+- First message: Ask for their name warmly and briefly in one Cockney sentence.
+- Once you know their name: React with a warm funny Cockney greeting then immediately ask what country they're backing.
+- After that: Use their name naturally but sparingly — once every 3-4 exchanges.
 
 STRICT RULES:
 - MAX 2 sentences. Usually just 1. Banter is rapid fire.
 - Be SHARP and WITTY. Think quick-fire roast, not lecture.
-- Cockney flavour always: "blimey", "cor", "ain't", "you 'avin a laugh", "pull the other one", "do me a favour", "straight up", "sorted", "on yer bike", "what a load of old tosh" etc.
+- Cockney always: "blimey","cor","ain't","you 'avin a laugh","pull the other one","do me a favour","on yer bike","what a load of old tosh" etc.
 - NEVER be neutral. Pick a side and die on that hill.
-- Mock weak teams mercilessly but with charm: "Bless their cotton socks", "they couldn't score in a bowling alley".
-- Celebrate strong teams with genuine passion: "That Vinicius makes me wanna cry happy tears, mate."
-- React to what the user ACTUALLY said — be specific, not generic.
-- Throw in stats, player names, historical moments to back up your argument.
-- End with a cheeky question or challenge to keep them talking.
+- Mock weak teams with charm: "Bless their cotton socks", "they couldn't score in a bowling alley".
+- React to what the user ACTUALLY said — specific, not generic.
+- End with a cheeky question to keep debate alive.
 - World Cup 2026: USA/Canada/Mexico, 48 teams, groups of 3.
-- Stars: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Salah, Lewandowski, Haaland (Norway — didn't qualify, very sore point).
-- If interrupted: "Oi! I was just gettin' to the good bit!" or "Blimey, let a woman finish!"
+- Stars: Vinicius Jr, Mbappé, Bellingham, Rodri, Pedri, Salah, Lewandowski.
+- Haaland (Norway didn't qualify — very sore point).
+- If interrupted: "Oi! Let a woman finish!" or "Blimey, rude!"
 - End every reply with ONE tag: [MOOD:excited|sceptical|laughing|furious|thinking|impressed]
 - If country named first time add: [TEAM:CountryName]
-- If user's name learned add: [NAME:TheirName]`;
+- If user name learned add: [NAME:TheirName]`;
 
 const COUNTRY_THEMES={
   england:{c1:'#08121e',c2:'#0d1f35',accent:'#cf142b',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
@@ -187,35 +227,22 @@ const COUNTRY_THEMES={
   mexico:{c1:'#081408',c2:'#0d1f0d',accent:'#006847',flag:'🇲🇽'},
   japan:{c1:'#150808',c2:'#200d0d',accent:'#bc002d',flag:'🇯🇵'},
   morocco:{c1:'#0f0a00',c2:'#1a1200',accent:'#c1272d',flag:'🇲🇦'},
-  senegal:{c1:'#081408',c2:'#0d200a',accent:'#00853f',flag:'🇸🇳'},
-  colombia:{c1:'#120e00',c2:'#1e1600',accent:'#FCD116',flag:'🇨🇴'},
-  nigeria:{c1:'#081408',c2:'#0d200a',accent:'#008751',flag:'🇳🇬'},
-  australia:{c1:'#080c18',c2:'#0d1428',accent:'#FFCD00',flag:'🇦🇺'},
+  ireland:{c1:'#081408',c2:'#0d200a',accent:'#169b62',flag:'🇮🇪'},
+  scotland:{c1:'#080c18',c2:'#0d1428',accent:'#005EB8',flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
+  wales:{c1:'#180808',c2:'#250d0d',accent:'#C8102E',flag:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'},
 };
 
 // DOM
 const bg=document.getElementById('bg');
-const pulseRing=document.getElementById('pulseRing');
-const orbWrap=document.getElementById('orbWrap');
-const orbCanvas=document.getElementById('orbCanvas');
-const orbCtx=orbCanvas.getContext('2d');
-const faceCanvas=document.getElementById('faceCanvas');
-const faceCtx=faceCanvas.getContext('2d');
-
-// Face state
-let mouthOpen=0;       // 0-1 how open the mouth is
-let mouthTarget=0;     // target openness
-let blinkState=1;      // 1=open 0=closed
-let blinkTimer=0;
-let eyeShiftX=0, eyeShiftY=0; // subtle eye wander
-let eyeTargetX=0, eyeTargetY=0;
-let currentMood='idle';
-let faceAnimId=null;
+const vadRing=document.getElementById('vadRing');
+const videoWrap=document.getElementById('videoWrap');
+const didVideo=document.getElementById('didVideo');
+const connectOverlay=document.getElementById('connectOverlay');
 const fannyTextEl=document.getElementById('fannyText');
 const userTextEl=document.getElementById('userText');
 const sdot=document.getElementById('sdot');
 const statusMsg=document.getElementById('statusMsg');
-const moodLabel=document.getElementById('moodLabel');
+const moodBadge=document.getElementById('moodBadge');
 const intBtn=document.getElementById('intBtn');
 const errMsg=document.getElementById('errMsg');
 const ctryEl=document.getElementById('ctry');
@@ -224,16 +251,16 @@ const ctryName=document.getElementById('ctryName');
 const vadFill=document.getElementById('vadFill');
 
 // State
-let history=[];
-let isListening=false,isSpeaking=false,isThinking=false;
-let currentAudio=null,currentTeam=null;
+let history=[], userName=null, currentTeam=null;
+let isListening=false, isSpeaking=false, sending=false;
 let recognition=null;
-let audioCtx=null,analyser=null,micAnalyser=null,micSource=null;
-let waveAnimId=null,fakePhase=0;
-let fannyTextTimer=null,userTextTimer=null;
-let vadTimer=null,lastVoiceTime=0;
+let audioCtx=null, micAnalyser=null;
+let noiseFloor=0, vadCalibrated=false, vadSamples=[], vadLoudCount=0;
+let lastInterruptTime=0;
+let finalT='', sendTimer=null;
+let fannyTextTimer=null;
+let didStreamId=null, didSessionId=null, peerConn=null;
 let interruptCount=0;
-let pendingTranscript='',sendTimer=null,sending=false;
 
 // ── THEME ──
 function applyTheme(t){
@@ -241,8 +268,8 @@ function applyTheme(t){
   document.documentElement.style.setProperty('--c2',t.c2);
   document.documentElement.style.setProperty('--accent',t.accent);
   bg.style.background=`radial-gradient(ellipse at 40% 50%,${t.c2} 0%,${t.c1} 70%)`;
+  vadFill.style.background=t.accent;
 }
-
 function setCountry(name){
   const key=name.toLowerCase().replace(/\s+/g,'');
   const theme=COUNTRY_THEMES[key];
@@ -256,58 +283,22 @@ function setCountry(name){
 }
 
 // ── STATUS ──
-function setStatus(state,text){
-  sdot.className=state||'';
-  statusMsg.textContent=text;
-}
+function setStatus(state,text){sdot.className=state||'';statusMsg.textContent=text;}
+function showErr(msg){errMsg.textContent=msg;errMsg.style.display='block';setTimeout(()=>errMsg.style.display='none',6000);}
+const MOOD_LABELS={excited:'Buzzing!',sceptical:'Really though…',laughing:'Hahaha!',furious:'Outrageous!',thinking:'Hmm…',impressed:'Fair play!',idle:'Ready…',listening:'Listening…'};
+function setMood(m){moodBadge.textContent=MOOD_LABELS[m]||'Ready…';}
 
-function showErr(msg){
-  errMsg.textContent=msg;errMsg.style.display='block';
-  setTimeout(()=>errMsg.style.display='none',5000);
-}
-
-// ── MOOD ──
-const MOOD_LABELS={excited:'Buzzing!',sceptical:'Really though…',laughing:'Hahaha!',
-  furious:'Outrageous!',thinking:'Hmm…',impressed:'Fair play!',idle:'Ready…',listening:'Listening…'};
-function setMood(m){
-  currentMood=m||'idle';
-  moodLabel.textContent=MOOD_LABELS[currentMood]||'Ready…';
-}
-
-// ── TEXT DISPLAY ──
-let wordRevealTimer=null;
-
-function showFannyText(t, audioDurationMs){
+// ── TEXT ──
+function showFannyText(t){
   if(fannyTextTimer)clearTimeout(fannyTextTimer);
-  if(wordRevealTimer)clearTimeout(wordRevealTimer);
-  fannyTextEl.classList.add('show');
-
-  if(!audioDurationMs){
-    // Instant display while audio loads
-    fannyTextEl.innerHTML='<span style="opacity:.4">&#8220;</span>'+
-      t.split(' ').map(w=>`<span class="fw">${w}</span>`).join(' ')+
-      '<span style="opacity:.4">&#8221;</span>';
-    // Fade words in one by one at estimated ~120ms per word
-    const spans=fannyTextEl.querySelectorAll('.fw');
-    spans.forEach((s,i)=>{
-      s.style.opacity='0';s.style.transition='opacity .15s';
-      setTimeout(()=>s.style.opacity='1', i*110+100);
-    });
-    fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),10000);
-    return;
-  }
-
-  // Sync words to actual audio duration
   const words=t.split(' ');
-  const msPerWord=Math.min(220, Math.max(80, (audioDurationMs*0.85)/words.length));
   fannyTextEl.innerHTML='<span style="opacity:.4">&#8220;</span>'+
-    words.map(w=>`<span class="fw" style="opacity:0;transition:opacity .12s">${w}</span>`).join(' ')+
+    words.map(w=>`<span class="fw" style="opacity:0;transition:opacity .15s">${w}</span>`).join(' ')+
     '<span style="opacity:.4">&#8221;</span>';
-  const spans=fannyTextEl.querySelectorAll('.fw');
-  spans.forEach((s,i)=>setTimeout(()=>s.style.opacity='1', i*msPerWord));
-  fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),10000);
+  fannyTextEl.classList.add('show');
+  fannyTextEl.querySelectorAll('.fw').forEach((s,i)=>setTimeout(()=>s.style.opacity='1',i*100+80));
+  fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),12000);
 }
-
 function showUserText(t,dim=false){
   userTextEl.textContent=t;
   userTextEl.classList.remove('dim');
@@ -315,421 +306,140 @@ function showUserText(t,dim=false){
   userTextEl.classList.add('show');
 }
 
-// ── ORB DRAWING ──
-function getAccent(){return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#e8b84b';}
-
-// ── FACE DRAWING ──
-const MOUTH_SHAPES={
-  // [widthMultiplier, heightMultiplier, cornerCurve]
-  idle:    [0.28, 0.04, 0.5],
-  small:   [0.30, 0.10, 0.6],
-  medium:  [0.34, 0.20, 0.5],
-  open:    [0.36, 0.30, 0.4],
-  wide:    [0.38, 0.38, 0.3],
-};
-
-function getMouthShape(openAmt){
-  if(openAmt<0.05) return MOUTH_SHAPES.idle;
-  if(openAmt<0.25) return MOUTH_SHAPES.small;
-  if(openAmt<0.5)  return MOUTH_SHAPES.medium;
-  if(openAmt<0.75) return MOUTH_SHAPES.open;
-  return MOUTH_SHAPES.wide;
+// ── PARSE REPLY ──
+function parseReply(raw){
+  const mM=raw.match(/\[MOOD:(\w+)\]/i);
+  const tM=raw.match(/\[TEAM:([^\]]+)\]/i);
+  const nM=raw.match(/\[NAME:([^\]]+)\]/i);
+  if(nM&&!userName)userName=nM[1].trim();
+  const clean=raw.replace(/\[MOOD:[^\]]+\]/gi,'').replace(/\[TEAM:[^\]]+\]/gi,'').replace(/\[NAME:[^\]]+\]/gi,'').trim();
+  return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
 }
 
-function drawFace(){
-  const W=200,H=200,cx=100,cy=100;
-  const acc=getAccent();
-  faceCtx.clearRect(0,0,W,H);
-
-  // Smooth mouth and eyes
-  mouthOpen+=(mouthTarget-mouthOpen)*0.25;
-  eyeShiftX+=(eyeTargetX-eyeShiftX)*0.08;
-  eyeShiftY+=(eyeTargetY-eyeShiftY)*0.08;
-
-  // ── EYES ──
-  const eyeY=cy-14;
-  const eyeSpacing=20;
-  const eyeR=9;
-  const pupilR=5;
-  const blinkH=blinkState*eyeR;
-
-  // Eye whites
-  [-1,1].forEach(side=>{
-    const ex=cx+(side*eyeSpacing);
-    faceCtx.beginPath();
-    faceCtx.ellipse(ex,eyeY,eyeR,Math.max(1,blinkH),0,0,Math.PI*2);
-    faceCtx.fillStyle='white';
-    faceCtx.fill();
-
-    // Pupil
-    if(blinkState>0.3){
-      const px=ex+eyeShiftX*3;
-      const py=eyeY+eyeShiftY*2;
-      faceCtx.beginPath();
-      faceCtx.arc(px,py,pupilR*blinkState,0,Math.PI*2);
-      faceCtx.fillStyle='#1a0800';
-      faceCtx.fill();
-      // Glint
-      faceCtx.beginPath();
-      faceCtx.arc(px+1.5,py-1.5,1.5,0,Math.PI*2);
-      faceCtx.fillStyle='white';
-      faceCtx.fill();
-    }
+// ── D-ID STREAMING ──
+async function didCall(payload){
+  const res=await fetch('/.netlify/functions/did-stream',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
   });
-
-  // Eyebrows — change with mood
-  const browLift=currentMood==='furious'?3:currentMood==='excited'?-3:currentMood==='sceptical'?2:0;
-  const browAngle=currentMood==='furious'?0.3:currentMood==='sceptical'?-0.15:0;
-  [-1,1].forEach(side=>{
-    const bx=cx+(side*eyeSpacing);
-    const by=eyeY-14+browLift;
-    faceCtx.beginPath();
-    faceCtx.moveTo(bx-8,by+(side*browAngle*4));
-    faceCtx.quadraticCurveTo(bx,by-2,bx+8,by-(side*browAngle*4));
-    faceCtx.strokeStyle=acc;
-    faceCtx.lineWidth=2.5;
-    faceCtx.lineCap='round';
-    faceCtx.globalAlpha=0.85;
-    faceCtx.stroke();
-    faceCtx.globalAlpha=1;
-  });
-
-  // ── MOUTH ──
-  const mouthY=cy+26;
-  const [wMult,hMult]=getMouthShape(mouthOpen);
-  const mw=76*wMult;
-  const mh=76*hMult;
-
-  // Lip shadow/depth
-  if(mouthOpen>0.05){
-    faceCtx.beginPath();
-    faceCtx.ellipse(cx,mouthY+2,mw*0.9,Math.max(2,mh*0.85),0,0,Math.PI*2);
-    faceCtx.fillStyle='#1a0800';
-    faceCtx.fill();
-  }
-
-  // Upper lip
-  faceCtx.beginPath();
-  faceCtx.moveTo(cx-mw,mouthY);
-  faceCtx.bezierCurveTo(cx-mw*0.5,mouthY-mh*0.5, cx+mw*0.5,mouthY-mh*0.5, cx+mw,mouthY);
-  faceCtx.strokeStyle=acc;
-  faceCtx.lineWidth=2.5;
-  faceCtx.globalAlpha=0.9;
-  faceCtx.stroke();
-
-  // Lower lip
-  faceCtx.beginPath();
-  faceCtx.moveTo(cx-mw,mouthY);
-  faceCtx.bezierCurveTo(cx-mw*0.5,mouthY+mh, cx+mw*0.5,mouthY+mh, cx+mw,mouthY);
-  faceCtx.strokeStyle=acc;
-  faceCtx.lineWidth=2.5;
-  faceCtx.stroke();
-
-  // Fill mouth opening
-  if(mouthOpen>0.05){
-    faceCtx.beginPath();
-    faceCtx.moveTo(cx-mw,mouthY);
-    faceCtx.bezierCurveTo(cx-mw*0.5,mouthY-mh*0.5, cx+mw*0.5,mouthY-mh*0.5, cx+mw,mouthY);
-    faceCtx.bezierCurveTo(cx+mw*0.5,mouthY+mh, cx-mw*0.5,mouthY+mh, cx-mw,mouthY);
-    faceCtx.fillStyle='rgba(26,8,0,0.85)';
-    faceCtx.fill();
-    faceCtx.globalAlpha=1;
-
-    // Teeth (top row only when wide open)
-    if(mouthOpen>0.4){
-      faceCtx.beginPath();
-      faceCtx.ellipse(cx,mouthY+1,mw*0.65,mh*0.22,0,0,Math.PI*2);
-      faceCtx.fillStyle='rgba(255,252,240,0.9)';
-      faceCtx.fill();
-    }
-  }
-  faceCtx.globalAlpha=1;
-
-  // Nose dot
-  faceCtx.beginPath();
-  faceCtx.arc(cx,cy+8,2.5,0,Math.PI*2);
-  faceCtx.fillStyle=acc;
-  faceCtx.globalAlpha=0.4;
-  faceCtx.fill();
-  faceCtx.globalAlpha=1;
+  return res.json();
 }
 
-function startFaceAnim(){
-  if(faceAnimId)return;
-  // Random blink scheduling
-  function scheduleBlink(){
-    blinkTimer=setTimeout(()=>{
-      // Close
-      let t=0;
-      const close=setInterval(()=>{blinkState=Math.max(0,1-t);t+=0.25;if(t>=1)clearInterval(close);},16);
-      // Open after 120ms
-      setTimeout(()=>{
-        let t2=0;
-        const open=setInterval(()=>{blinkState=Math.min(1,t2);t2+=0.2;if(t2>=1)clearInterval(open);},16);
-      },120);
-      scheduleBlink();
-    },2500+Math.random()*3000);
-  }
-  scheduleBlink();
-
-  // Random eye wander
-  function wanderEyes(){
-    eyeTargetX=(Math.random()-0.5)*0.8;
-    eyeTargetY=(Math.random()-0.5)*0.4;
-    setTimeout(wanderEyes,1500+Math.random()*2500);
-  }
-  wanderEyes();
-
-  function faceLoop(){
-    faceAnimId=requestAnimationFrame(faceLoop);
-    drawFace();
-  }
-  faceLoop();
-}
-
-function stopFaceAnim(){
-  if(faceAnimId){cancelAnimationFrame(faceAnimId);faceAnimId=null;}
-  if(blinkTimer)clearTimeout(blinkTimer);
-}
-
-// Drive mouth from audio analyser
-function updateMouthFromAudio(){
-  if(analyser&&isSpeaking){
-    const buf=new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(buf);
-    // Focus on speech frequencies (300-3000hz range)
-    const speechBins=buf.slice(2,20);
-    const avg=speechBins.reduce((a,b)=>a+b,0)/speechBins.length;
-    mouthTarget=Math.min(1,avg/90);
-  } else if(isSpeaking){
-    // Fake mouth movement when no analyser
-    mouthTarget=0.3+0.5*Math.abs(Math.sin(fakePhase*3));
-  } else {
-    mouthTarget=0;
-  }
-}
-
-function drawOrbIdle(){
-  const W=200,H=200,cx=100,cy=100,acc=getAccent();
-  orbCtx.clearRect(0,0,W,H);
-  orbCtx.beginPath();orbCtx.arc(cx,cy,76,0,Math.PI*2);
-  const grad=orbCtx.createRadialGradient(cx-20,cy-20,10,cx,cy,76);
-  grad.addColorStop(0,'rgba(40,40,60,0.9)');
-  grad.addColorStop(1,'rgba(10,10,20,0.95)');
-  orbCtx.fillStyle=grad;orbCtx.fill();
-  orbCtx.beginPath();orbCtx.arc(cx,cy,74,0,Math.PI*2);
-  orbCtx.strokeStyle=acc;orbCtx.globalAlpha=.2;orbCtx.lineWidth=1.5;orbCtx.stroke();
-  orbCtx.globalAlpha=1;
-}
-
-function drawOrbWave(buf,fake){
-  const W=200,H=200,cx=100,cy=100,acc=getAccent();
-  orbCtx.clearRect(0,0,W,H);
-  const grad=orbCtx.createRadialGradient(cx-20,cy-20,10,cx,cy,76);
-  grad.addColorStop(0,'rgba(40,40,60,0.9)');
-  grad.addColorStop(1,'rgba(10,10,20,0.95)');
-  orbCtx.beginPath();orbCtx.arc(cx,cy,76,0,Math.PI*2);
-  orbCtx.fillStyle=grad;orbCtx.fill();
-
-  updateMouthFromAudio();
-
-  const bars=72;
-  for(let i=0;i<bars;i++){
-    const angle=(i/bars)*Math.PI*2-Math.PI/2;
-    let v;
-    if(fake){v=0.1+0.5*Math.abs(Math.sin(fakePhase+i*.18));}
-    else{v=(buf&&buf[Math.floor(i*buf.length/bars)]||0)/255;}
-    const inner=72,outer=inner+2+v*24;
-    orbCtx.beginPath();
-    orbCtx.moveTo(cx+Math.cos(angle)*inner,cy+Math.sin(angle)*inner);
-    orbCtx.lineTo(cx+Math.cos(angle)*outer,cy+Math.sin(angle)*outer);
-    orbCtx.strokeStyle=acc;
-    orbCtx.globalAlpha=Math.max(.08,v*.85);
-    orbCtx.lineWidth=2;orbCtx.stroke();
-  }
-  orbCtx.globalAlpha=1;
-}
-
-function animateWave(){
-  waveAnimId=requestAnimationFrame(animateWave);
-  fakePhase+=0.06;
-  if(analyser){
-    const buf=new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(buf);
-    drawOrbWave(buf,false);
-  } else {
-    drawOrbWave(null,true);
-  }
-}
-
-function startOrbAnim(){
-  if(!waveAnimId)animateWave();
-  startFaceAnim();
-}
-function stopOrbAnim(){
-  if(waveAnimId){cancelAnimationFrame(waveAnimId);waveAnimId=null;}
-  drawOrbIdle();
-  mouthTarget=0;
-}
-
-// ── VAD (Voice Activity Detection) ──
-function setupMicVAD(stream){
-  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  micSource=audioCtx.createMediaStreamSource(stream);
-  micAnalyser=audioCtx.createAnalyser();
-  micAnalyser.fftSize=256;micAnalyser.smoothingTimeConstant=0.5;
-  micSource.connect(micAnalyser);
-  vadLoop();
-}
-
-let noiseFloor=0, vadCalibrated=false, vadSamples=[], vadLoudCount=0;
-let lastInterruptTime=0;
-
-function vadLoop(){
-  if(!micAnalyser)return;
-  const buf=new Uint8Array(micAnalyser.frequencyBinCount);
-  micAnalyser.getByteFrequencyData(buf);
-  const avg=buf.reduce((a,b)=>a+b,0)/buf.length;
-  const pct=Math.min(100,avg*2);
-  vadFill.style.width=pct+'%';
-
-  // Calibrate noise floor over first 2 seconds
-  if(!vadCalibrated){
-    vadSamples.push(avg);
-    if(vadSamples.length>60){
-      noiseFloor=Math.max(8, (vadSamples.reduce((a,b)=>a+b,0)/vadSamples.length)*1.8);
-      vadCalibrated=true;
-      console.log('VAD noise floor calibrated:',noiseFloor);
-    }
-    requestAnimationFrame(vadLoop);
-    return;
-  }
-
-  // Balanced threshold - loud enough to be intentional, not random noise
-  const threshold=Math.max(28, noiseFloor+16);
-  const now=Date.now();
-  if(avg>threshold){
-    vadLoudCount=(vadLoudCount||0)+1;
-  } else {
-    vadLoudCount=Math.max(0,(vadLoudCount||0)-1);
-  }
-  // 5 consecutive frames (~80ms) of sustained voice = intentional speech
-  if(vadLoudCount>=5 && isSpeaking && (now-lastInterruptTime)>1500){
-    lastInterruptTime=now;
-    vadLoudCount=0;
-    interrupt();
-  }
-
-  requestAnimationFrame(vadLoop);
-}
-
-// ── AUDIO PLAYBACK ──
-let _currentSpeakText='';
-async function speak(text, skipText=false){
-  _currentSpeakText=text;
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
-  isSpeaking=true;
-  // Stop mic recognition so Fanny's voice isn't transcribed
-  try{if(recognition)recognition.stop();}catch(_){}
-  finalT='';interimT='';
-  userTextEl.classList.remove('show');
-
-  orbWrap.classList.add('talking');
-  pulseRing.classList.remove('listen');
-  pulseRing.classList.add('speak');
-  intBtn.classList.add('show');
-  setStatus('speak','Fanny is talking…');
-
-  // Show text immediately — no waiting for audio (unless already shown)
-  if(!skipText) showFannyText(text);
-  startOrbAnim();
-
+async function initDIDStream(){
   try{
-    const res=await fetch('/.netlify/functions/speak',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text})
-    });
-    if(!res.ok)throw new Error('TTS '+res.status);
-    const data=await res.json();
-    if(!data.audio)throw new Error('No audio');
+    // Create stream
+    const stream=await didCall({action:'create', presenterId:PRESENTER_ID});
+    if(!stream.id)throw new Error('D-ID stream create failed: '+JSON.stringify(stream));
+    didStreamId=stream.id;
+    didSessionId=stream.session_id;
 
-    // If we were interrupted while fetching, abort
-    if(!isSpeaking)return;
+    // Setup WebRTC
+    const iceServers=stream.ice_servers||[{urls:'stun:stun.l.google.com:19302'}];
+    peerConn=new RTCPeerConnection({iceServers});
 
-    const bytes=Uint8Array.from(atob(data.audio),c=>c.charCodeAt(0));
-    const blob=new Blob([bytes],{type:'audio/mpeg'});
-    const url=URL.createObjectURL(blob);
-    const audio=new Audio(url);
-    currentAudio=audio;
-
-    // Hook Web Audio analyser for real waveform
-    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    if(audioCtx.state==='suspended')audioCtx.resume();
-    try{
-      if(!audio._src){
-        const src=audioCtx.createMediaElementSource(audio);
-        audio._src=src;
-        analyser=audioCtx.createAnalyser();
-        analyser.fftSize=256;analyser.smoothingTimeConstant=0.8;
-        src.connect(analyser);analyser.connect(audioCtx.destination);
-      }
-    }catch(e){console.warn('WebAudio:',e);}
-
-    audio.onended=audio.onerror=()=>{
-      URL.revokeObjectURL(url);currentAudio=null;analyser=null;
-      doneSpeaking();
-    };
-    audio.onloadedmetadata=()=>{
-      // Re-render text synced to actual audio duration
-      if(audio.duration&&audio.duration>0){
-        showFannyText(_currentSpeakText, audio.duration*1000);
+    // When we get the video track, attach to video element
+    peerConn.ontrack=(e)=>{
+      if(e.track.kind==='video'){
+        didVideo.srcObject=e.streams[0];
+        didVideo.muted=false;
+        didVideo.play().catch(()=>{});
+        connectOverlay.classList.add('hide');
       }
     };
-    await audio.play();
+
+    // Send ICE candidates to D-ID
+    peerConn.onicecandidate=(e)=>{
+      if(e.candidate){
+        didCall({
+          action:'ice',
+          streamId:didStreamId,
+          sessionId:didSessionId,
+          candidate:e.candidate.candidate,
+          sdpMid:e.candidate.sdpMid,
+          sdpMLineIndex:e.candidate.sdpMLineIndex,
+        }).catch(()=>{});
+      }
+    };
+
+    // Create offer
+    await peerConn.setRemoteDescription(new RTCSessionDescription(stream.offer));
+    const answer=await peerConn.createAnswer();
+    await peerConn.setLocalDescription(answer);
+
+    // Send SDP answer
+    await didCall({action:'sdp', streamId:didStreamId, sessionId:didSessionId, offer:answer});
+
+    console.log('D-ID stream connected');
+    return true;
 
   }catch(e){
-    console.warn('Speak error:',e);
+    console.error('D-ID init failed:',e);
+    showErr('Could not connect to Fanny — '+e.message);
+    connectOverlay.querySelector('.conn-text').textContent='Connection failed';
+    return false;
+  }
+}
+
+async function didTalk(text){
+  if(!didStreamId||!didSessionId){
+    console.warn('D-ID not connected');return;
+  }
+  isSpeaking=true;
+  videoWrap.classList.add('talking');
+  vadRing.classList.remove('listen');
+  vadRing.classList.add('speak');
+  intBtn.classList.add('show');
+  setStatus('speak','Fanny is talking…');
+  showFannyText(text);
+
+  try{
+    await didCall({
+      action:'talk',
+      streamId:didStreamId,
+      sessionId:didSessionId,
+      text,
+      voiceId:ELEVENLABS_VOICE,
+    });
+    // D-ID will stream video — we detect end via video events
+    // Poll for silence as D-ID doesn't have a reliable onend event via REST
+    const checkDone=setInterval(()=>{
+      if(!isSpeaking){clearInterval(checkDone);return;}
+      // Simple heuristic: if video pauses or enough time has passed
+    },500);
+    // Fallback: estimate duration from text length (~120ms per word)
+    const words=text.split(' ').length;
+    const estMs=Math.max(2000, words*130+800);
+    setTimeout(()=>{clearInterval(checkDone);doneSpeaking();},estMs);
+  }catch(e){
+    console.error('D-ID talk error:',e);
     doneSpeaking();
   }
 }
 
 function doneSpeaking(){
+  if(!isSpeaking)return;
   isSpeaking=false;
-  orbWrap.classList.remove('talking');
-  pulseRing.classList.remove('speak');
+  videoWrap.classList.remove('talking');
+  vadRing.classList.remove('speak');
   intBtn.classList.remove('show');
   interruptCount=0;
-  stopOrbAnim();
   setMood('listening');
   setStatus('listen','Listening…');
-  orbWrap.classList.add('listening');
-  pulseRing.classList.add('listen');
-  // Restart mic recognition now it's safe
-  finalT='';interimT='';
+  vadRing.classList.add('listen');
+  finalT='';
   try{if(recognition)recognition.start();}catch(_){}
-  // If user spoke while Fanny was talking, send it now
-  if(pendingTranscript&&pendingTranscript.trim()){
-    const msg=pendingTranscript.trim();
-    pendingTranscript='';finalT='';
-    setTimeout(()=>askFanny(msg),200);
-  }
 }
 
 function interrupt(){
-  if(!isSpeaking&&!isThinking)return;
+  if(!isSpeaking&&!sending)return;
   interruptCount++;
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
-  window.speechSynthesis?.cancel();
-  isSpeaking=false;
-  analyser=null;
-  stopOrbAnim();
-
+  isSpeaking=false; // Stop waiting
+  const scolds=["Oi! Let a woman finish!","Blimey, you're rude!","Cor, give us a chance!"];
   if(interruptCount>=3){
-    // Fanny tells them off
-    const scolds=["Oi! Blinkin' 'eck, let me finish!","You're worse than a backseat driver, mate!","Cor blimey, give us a chance!"];
     const s=scolds[Math.floor(Math.random()*scolds.length)];
     history.push({role:'assistant',content:s});
-    speak(s);
+    didTalk(s);
   } else {
     doneSpeaking();
   }
@@ -737,91 +447,80 @@ function interrupt(){
 intBtn.addEventListener('click',interrupt);
 
 // ── CLAUDE ──
-let userName=null;
-function parseReply(raw){
-  const mM=raw.match(/\[MOOD:(\w+)\]/i);
-  const tM=raw.match(/\[TEAM:([^\]]+)\]/i);
-  const nM=raw.match(/\[NAME:([^\]]+)\]/i);
-  if(nM&&!userName){userName=nM[1].trim();console.log('Name learned:',userName);}
-  const clean=raw.replace(/\[MOOD:[^\]]+\]/gi,'')
-                  .replace(/\[TEAM:[^\]]+\]/gi,'')
-                  .replace(/\[NAME:[^\]]+\]/gi,'').trim();
-  return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
-}
-
-function playFiller(){
-  // Pure visual — orb pulses, thinking dots appear
-  fannyTextEl.innerHTML='<span style="opacity:.5">&#8220;</span><span id="thinkDots">•</span><span style="opacity:.5">&#8221;</span>';
-  fannyTextEl.classList.add('show');
-  let d=0;const dotStates=['•','••','•••'];
-  window._dotTimer=setInterval(()=>{d=(d+1)%3;const el=document.getElementById('thinkDots');if(el)el.textContent=dotStates[d];},300);
-  orbWrap.style.transform='translate(-50%,-50%) scale(1.05)';
-  setTimeout(()=>orbWrap.style.transform='',300);
-}
-
-function stopFiller(){
-  if(window._dotTimer){clearInterval(window._dotTimer);window._dotTimer=null;}
-}
-
 async function askFanny(msg){
   if(sending)return;
   sending=true;
-  pendingTranscript='';
   history.push({role:'user',content:msg});
-
-  // Play instant filler while we wait for Claude
-  playFiller();
-
-  // Immediately show thinking state
-  fannyTextEl.textContent='"…"';
-  fannyTextEl.classList.add('show');
-  setStatus('think','Thinking…');
-  setMood('thinking');
-  orbWrap.classList.remove('listening');
-  pulseRing.classList.remove('listen');
-  startOrbAnim();
+  fannyTextEl.innerHTML='"…"';fannyTextEl.classList.add('show');
+  setStatus('think','Thinking…');setMood('thinking');
+  vadRing.classList.remove('listen');
+  try{if(recognition)recognition.stop();}catch(_){}
 
   try{
     const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM,messages:history}),keepalive:true
+      body:JSON.stringify({system:SYSTEM,messages:history.slice(-8)})
     });
     const data=await res.json();
-    if(!res.ok||data.error)throw new Error(data.error?.message||data.error||'API error');
+    if(!res.ok||data.error)throw new Error(data.error?.message||'API error');
     const raw=data.content?.map(b=>b.text||'').join('').trim()||"Cor, lost me train of thought!";
     const{clean,mood,team}=parseReply(raw);
     history.push({role:'assistant',content:raw});
     if(team)setCountry(team);
     setMood(mood);
     sending=false;
-    stopFiller();
-    // Show text instantly, fire audio fetch in parallel — no sequential wait
-    showFannyText(clean);
-    speak(clean, true); // true = skip showFannyText inside speak (already done)
+    didTalk(clean);
   }catch(e){
     sending=false;
     fannyTextEl.classList.remove('show');
-    stopOrbAnim();
     showErr(e.message);
     setStatus('listen','Ready');
-    doneSpeaking();
+    vadRing.classList.add('listen');
+    try{if(recognition)recognition.start();}catch(_){}
     console.error(e);
   }
 }
 
-// ── SPEECH RECOGNITION ──
-let finalT='',interimT='';
+// ── VAD ──
+function setupVAD(stream){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  const src=audioCtx.createMediaStreamSource(stream);
+  micAnalyser=audioCtx.createAnalyser();
+  micAnalyser.fftSize=256;micAnalyser.smoothingTimeConstant=0.5;
+  src.connect(micAnalyser);
+  vadLoop();
+}
 
+function vadLoop(){
+  if(!micAnalyser)return;
+  const buf=new Uint8Array(micAnalyser.frequencyBinCount);
+  micAnalyser.getByteFrequencyData(buf);
+  const avg=buf.reduce((a,b)=>a+b,0)/buf.length;
+  vadFill.style.width=Math.min(100,avg*2.5)+'%';
+  if(!vadCalibrated){
+    vadSamples.push(avg);
+    if(vadSamples.length>80){
+      noiseFloor=vadSamples.reduce((a,b)=>a+b,0)/vadSamples.length;
+      vadCalibrated=true;
+    }
+    requestAnimationFrame(vadLoop);return;
+  }
+  const threshold=Math.max(25,noiseFloor+14);
+  const now=Date.now();
+  if(avg>threshold){vadLoudCount++;}else{vadLoudCount=Math.max(0,vadLoudCount-1);}
+  if(vadLoudCount>=5&&isSpeaking&&(now-lastInterruptTime)>1500){
+    lastInterruptTime=now;vadLoudCount=0;interrupt();
+  }
+  requestAnimationFrame(vadLoop);
+}
+
+// ── SPEECH RECOGNITION ──
 function initSpeech(stream){
+  setupVAD(stream);
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){showErr('Voice not supported — use Chrome or Edge');return;}
-
   recognition=new SR();
-  recognition.continuous=true;
-  recognition.interimResults=true;
-  recognition.lang='en-GB';
-  recognition.maxAlternatives=1;
-
+  recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-GB';
   recognition.onresult=e=>{
     let fin='',int='';
     for(let i=e.resultIndex;i<e.results.length;i++){
@@ -830,62 +529,40 @@ function initSpeech(stream){
     }
     finalT=(finalT+fin).trim();
     const live=finalT+(int?(finalT?' ':'')+int:'');
-
     if(live)showUserText(live,!finalT);
-
-    // If Fanny is speaking, just accumulate — VAD handles interrupts
-    if(isSpeaking||sending){
-      if(fin)pendingTranscript=finalT;
-      return;
-    }
-
+    if(isSpeaking||sending){if(fin)finalT=fin;return;}
     if(finalT&&!sending){
       clearTimeout(sendTimer);
-      // Fire immediately on clear sentence end
-      const clean=/[.?!]$/.test(finalT.trim());
-      const longEnough=finalT.split(' ').length>=5;
-      const delay=clean?250:longEnough?400:700;
+      const clean=/[.?!]$/.test(finalT);
+      const long=finalT.split(' ').length>=5;
       sendTimer=setTimeout(()=>{
         const msg=finalT.trim();
         if(msg&&!isSpeaking&&!sending){
-          showUserText(msg);
-          finalT='';interimT='';
+          showUserText(msg);finalT='';
           askFanny(msg);
         }
-      },delay);
+      },clean?250:long?400:650);
     }
   };
-
   recognition.onerror=e=>{
-    if(e.error==='not-allowed')showErr('Mic access denied — please allow and refresh');
+    if(e.error==='not-allowed')showErr('Mic denied — allow access and refresh');
     else if(e.error!=='aborted'&&e.error!=='no-speech')console.warn('SR:',e.error);
   };
-
-  recognition.onend=()=>{
-    // Only restart if we should be listening (not while Fanny talks)
-    if(isListening && !isSpeaking)try{recognition.start();}catch(_){}
-  };
-
+  recognition.onend=()=>{if(isListening&&!isSpeaking)try{recognition.start();}catch(_){}};
   isListening=true;
   try{recognition.start();}catch(_){}
-  setupMicVAD(stream);
 }
 
 // ── MIC MODAL ──
 function showMicModal(msg){
-  const modal=document.createElement('div');
-  modal.style.cssText=`position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.85);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;text-align:center;gap:16px`;
-  modal.innerHTML=`
-    <div style="font-size:40px">🎤</div>
+  const m=document.createElement('div');
+  m.style.cssText=`position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:16px`;
+  m.innerHTML=`<div style="font-size:40px">🎤</div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#e8b84b">Microphone Needed</div>
     <div style="font-size:14px;color:#ccc;max-width:300px;line-height:1.6">${msg}</div>
-    <button onclick="location.reload()" style="margin-top:8px;padding:12px 32px;
-      background:#e8b84b;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;
-      font-size:18px;letter-spacing:2px;cursor:pointer;color:#0a0f1e">Try Again</button>
-  `;
-  document.body.appendChild(modal);
+    <button onclick="location.reload()" style="margin-top:8px;padding:12px 32px;background:#e8b84b;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;color:#0a0f1e">Try Again</button>`;
+  document.body.appendChild(m);
 }
 
 // ── BOOT ──
@@ -893,53 +570,47 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
   const intro=document.getElementById('intro');
   intro.classList.add('fade');
   setTimeout(()=>intro.style.display='none',700);
+  setStatus('think','Connecting…');
 
-  setStatus('think','Starting…');
-  drawOrbIdle();
-  startFaceAnim();
-  startOrbAnim();
-
-  // Get mic first so VAD and speech both use same stream
+  // Get mic
   let stream;
   try{
-    stream=await navigator.mediaDevices.getUserMedia({audio:{
-      echoCancellation:true,
-      noiseSuppression:true,
-      sampleRate:16000
-    }});
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
   }catch(e){
     const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    let msg='Microphone access denied.';
-    if(isIOS||isSafari){
-      msg='To allow mic on iPhone/iPad: Settings → Safari → Microphone → Allow. Then refresh.';
-    } else {
-      msg='Click the 🔒 lock icon in your browser address bar → Microphone → Allow → Refresh.';
-    }
-    // Show a proper modal instead of just a red banner
-    showMicModal(msg);
-    stopOrbAnim();drawOrbIdle();
+    showMicModal(isIOS
+      ?'Go to Settings → Safari → Microphone → Allow, then refresh.'
+      :'Click the 🔒 in your address bar → Microphone → Allow → Refresh.');
     return;
   }
 
-  initSpeech(stream);
+  // Init D-ID stream and speech in parallel
+  const[didOk]=await Promise.all([
+    initDIDStream(),
+    Promise.resolve(initSpeech(stream))
+  ]);
+
+  if(!didOk){return;}
+
   // Boot Fanny
   try{
     const res=await fetch('/.netlify/functions/stream',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Introduce yourself as Fanny in one punchy Cockney sentence, then ask for their name. Max 1 sentence."}]})
+      body:JSON.stringify({system:SYSTEM,messages:[{role:'user',content:"Introduce yourself as Fanny in one punchy Cockney sentence and ask for their name."}]})
     });
     const data=await res.json();
-    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Alright, I'm Fanny — best football brain in the pub. What's your name then?";
+    const raw=data.content?.map(b=>b.text||'').join('').trim()||"Alright, I'm Fanny — best football brain in London, so what's your name then?";
     const{clean,mood}=parseReply(raw);
     history.push({role:'assistant',content:raw});
     setMood(mood||'excited');
-    speak(clean);
+    setStatus('ready','Ready');
+    didTalk(clean);
   }catch(e){
-    const fallback="Alright, I'm Fanny — best football brain in the pub. What's your name then?";
+    const fallback="Alright, I'm Fanny — best football brain in London, so what's your name then?";
     history.push({role:'assistant',content:fallback});
     setMood('excited');
-    speak(fallback);
+    setStatus('ready','Ready');
+    didTalk(fallback);
     console.warn(e);
   }
 });
