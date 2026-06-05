@@ -1,5 +1,7 @@
-// D-ID Streaming API proxy
+// D-ID Agents Streams API proxy
+// Uses /agents/{agentId}/streams — the modern endpoint for agent avatars
 const DID_API = 'https://api.d-id.com';
+const AGENT_ID = 'v2_agt_DVc2eLPi';
 
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
@@ -10,46 +12,44 @@ exports.handler = async function(event) {
   let body;
   try { body = JSON.parse(event.body); } catch { return { statusCode: 400, body: '{"error":"Bad JSON"}' }; }
 
-  const { action, streamId, sessionId, offer, iceServers, text, voiceId } = body;
+  const { action, streamId, sessionId, offer, text } = body;
 
   try {
     let url, method = 'POST', payload;
 
     switch(action) {
       case 'create':
-        url = `${DID_API}/talks/streams`;
-        payload = {
-          presenter_id: body.presenterId,
-          driver_id: 'uM00QMww2Re',
-          face: {
-            top_left: [0, 0],
-            size: 512,
-          },
-          config: { stitch: true, fluent: true, auto_match: true },
-        };
+        url = `${DID_API}/agents/${AGENT_ID}/streams`;
+        payload = {};
         break;
 
       case 'sdp':
-        url = `${DID_API}/talks/streams/${streamId}/sdp`;
+        url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/sdp`;
         payload = { answer: offer, session_id: sessionId };
         break;
 
       case 'ice':
-        url = `${DID_API}/talks/streams/${streamId}/ice`;
-        payload = { candidate: body.candidate, sdpMid: body.sdpMid, sdpMLineIndex: body.sdpMLineIndex, session_id: sessionId };
+        url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/ice`;
+        payload = {
+          candidate: body.candidate,
+          sdpMid: body.sdpMid,
+          sdpMLineIndex: body.sdpMLineIndex,
+          session_id: sessionId
+        };
         break;
 
       case 'talk':
-        url = `${DID_API}/talks/streams/${streamId}`;
+        // Send text to agent stream — D-ID handles TTS internally via agent config
+        url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}`;
         payload = {
           script: {
             type: 'text',
             input: text,
             provider: {
               type: 'elevenlabs',
-              voice_id: voiceId || 'EQx6HGDYjkDpcli6vorJ',
+              voice_id: 'EQx6HGDYjkDpcli6vorJ', // Lizzie
               model_id: 'eleven_turbo_v2_5',
-              voice_config: { stability: 0.4, similarity_boost: 0.75, style: 0.45 }
+              voice_config: { stability: 0.4, similarity_boost: 0.75, style: 0.4 }
             }
           },
           session_id: sessionId,
@@ -58,7 +58,7 @@ exports.handler = async function(event) {
         break;
 
       case 'destroy':
-        url = `${DID_API}/talks/streams/${streamId}`;
+        url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}`;
         method = 'DELETE';
         payload = { session_id: sessionId };
         break;
@@ -73,7 +73,7 @@ exports.handler = async function(event) {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${DID_KEY}`,
       },
-      body: payload ? JSON.stringify(payload) : undefined,
+      body: payload && Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined,
     });
 
     const data = await res.json();
