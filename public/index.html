@@ -270,15 +270,27 @@ async function initWebRTC(){
 
   // Receive Fanna's video+audio
   peerConn.ontrack=(e)=>{
+    console.log('ontrack fired:',e.track.kind);
     if(e.streams&&e.streams[0]){
       didVideo.srcObject=e.streams[0];
-      didVideo.muted=false;
-      didVideo.play().then(()=>{
-        overlay.classList.add('hide');
-        setStatus('ready','Ready');
-        console.log('D-ID stream live!');
-      }).catch(e=>console.warn('Video play:',e));
+    } else {
+      // Some browsers don't bundle tracks in streams
+      if(!didVideo.srcObject){
+        const ms=new MediaStream();ms.addTrack(e.track);didVideo.srcObject=ms;
+      } else {
+        didVideo.srcObject.addTrack(e.track);
+      }
     }
+    didVideo.muted=false;
+    didVideo.play().then(()=>{
+      overlay.classList.add('hide');
+      setStatus('ready','Ready');
+      console.log('D-ID video playing!');
+    }).catch(err=>{
+      console.warn('Video autoplay blocked:',err);
+      // Try again on user gesture
+      overlay.innerHTML='<div style="color:#e8b84b;font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;padding:20px" onclick="document.getElementById('didVideo').play();this.parentElement.classList.add('hide')">TAP TO START</div>';
+    });
   };
 
   // ICE
@@ -295,6 +307,11 @@ async function initWebRTC(){
 
   peerConn.oniceconnectionstatechange=()=>{
     console.log('ICE:',peerConn.iceConnectionState);
+    if(peerConn.iceConnectionState==='connected'||peerConn.iceConnectionState==='completed'){
+      // ICE connected — hide overlay even if ontrack hasn't fired yet
+      setTimeout(()=>overlay.classList.add('hide'),500);
+      setStatus('ready','Ready');
+    }
     if(peerConn.iceConnectionState==='failed'){
       showErr('Connection lost — refresh to reconnect');
     }
