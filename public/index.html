@@ -102,6 +102,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   background:transparent;z-index:9;transition:background .1s}
 #vadFill{height:100%;width:0%;background:var(--accent);transition:width .08s,background var(--tr)}
 
+/* Word fade */
+.fw{display:inline-block}
+
 /* ERROR */
 #errMsg{position:fixed;top:56px;left:50%;transform:translateX(-50%);
   background:rgba(160,20,20,.95);border-radius:8px;padding:8px 18px;
@@ -245,10 +248,36 @@ const MOOD_LABELS={excited:'Buzzing!',sceptical:'Really though…',laughing:'Hah
 function setMood(m){moodLabel.textContent=MOOD_LABELS[m]||'Ready…';}
 
 // ── TEXT DISPLAY ──
-function showFannyText(t){
+let wordRevealTimer=null;
+
+function showFannyText(t, audioDurationMs){
   if(fannyTextTimer)clearTimeout(fannyTextTimer);
-  fannyTextEl.textContent='"'+t+'"';
+  if(wordRevealTimer)clearTimeout(wordRevealTimer);
   fannyTextEl.classList.add('show');
+
+  if(!audioDurationMs){
+    // Instant display while audio loads
+    fannyTextEl.innerHTML='<span style="opacity:.4">&#8220;</span>'+
+      t.split(' ').map(w=>`<span class="fw">${w}</span>`).join(' ')+
+      '<span style="opacity:.4">&#8221;</span>';
+    // Fade words in one by one at estimated ~120ms per word
+    const spans=fannyTextEl.querySelectorAll('.fw');
+    spans.forEach((s,i)=>{
+      s.style.opacity='0';s.style.transition='opacity .15s';
+      setTimeout(()=>s.style.opacity='1', i*110+100);
+    });
+    fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),10000);
+    return;
+  }
+
+  // Sync words to actual audio duration
+  const words=t.split(' ');
+  const msPerWord=Math.min(220, Math.max(80, (audioDurationMs*0.85)/words.length));
+  fannyTextEl.innerHTML='<span style="opacity:.4">&#8220;</span>'+
+    words.map(w=>`<span class="fw" style="opacity:0;transition:opacity .12s">${w}</span>`).join(' ')+
+    '<span style="opacity:.4">&#8221;</span>';
+  const spans=fannyTextEl.querySelectorAll('.fw');
+  spans.forEach((s,i)=>setTimeout(()=>s.style.opacity='1', i*msPerWord));
   fannyTextTimer=setTimeout(()=>fannyTextEl.classList.remove('show'),10000);
 }
 
@@ -360,17 +389,16 @@ function vadLoop(){
     return;
   }
 
-  // Require sustained loud voice — not a spike — to interrupt
-  const threshold=Math.max(40, noiseFloor+22);
+  // Balanced threshold - loud enough to be intentional, not random noise
+  const threshold=Math.max(28, noiseFloor+16);
   const now=Date.now();
   if(avg>threshold){
-    lastVoiceTime=now;
     vadLoudCount=(vadLoudCount||0)+1;
   } else {
-    vadLoudCount=Math.max(0,(vadLoudCount||0)-2);
+    vadLoudCount=Math.max(0,(vadLoudCount||0)-1);
   }
-  // Must be loud for 8+ consecutive frames (~130ms) before interrupting
-  if(vadLoudCount>=8 && isSpeaking && (now-lastInterruptTime)>3000){
+  // 5 consecutive frames (~80ms) of sustained voice = intentional speech
+  if(vadLoudCount>=5 && isSpeaking && (now-lastInterruptTime)>1500){
     lastInterruptTime=now;
     vadLoudCount=0;
     interrupt();
@@ -380,7 +408,9 @@ function vadLoop(){
 }
 
 // ── AUDIO PLAYBACK ──
+let _currentSpeakText='';
 async function speak(text){
+  _currentSpeakText=text;
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   isSpeaking=true;
   // Stop mic recognition so Fanny's voice isn't transcribed
@@ -432,6 +462,12 @@ async function speak(text){
     audio.onended=audio.onerror=()=>{
       URL.revokeObjectURL(url);currentAudio=null;analyser=null;
       doneSpeaking();
+    };
+    audio.onloadedmetadata=()=>{
+      // Re-render text synced to actual audio duration
+      if(audio.duration&&audio.duration>0){
+        showFannyText(_currentSpeakText, audio.duration*1000);
+      }
     };
     await audio.play();
 
@@ -492,14 +528,51 @@ function parseReply(raw){
   return{clean,mood:mM?mM[1].toLowerCase():'idle',team:tM?tM[1]:null};
 }
 
-// Visual thinking indicator — no audio filler (avoids voice mismatch)
+// Pre-cached Lizzie filler audio blobs — fetched at boot
+const FILLER_TEXTS=["Hmm!","Ooh!","Ha!","Right!"];
+let fillerBlobs=[], fillerReady=false;
+
+async function prefetchFillers(){
+  try{
+    const promises=FILLER_TEXTS.map(t=>
+      fetch('/.netlify/functions/speak',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:t})
+      }).then(r=>r.json()).then(d=>{
+        if(d.audio){
+          const bytes=Uint8Array.from(atob(d.audio),c=>c.charCodeAt(0));
+          return new Blob([bytes],{type:'audio/mpeg'});
+        }
+        return null;
+      }).catch(()=>null)
+    );
+    fillerBlobs=(await Promise.all(promises)).filter(Boolean);
+    fillerReady=fillerBlobs.length>0;
+    console.log('Fillers ready:',fillerBlobs.length);
+  }catch(e){console.warn('Filler prefetch failed:',e);}
+}
+
+let fillerAudio=null;
 function playFiller(){
-  // Animate orb and show dots to signal Fanny is thinking
+  // Visual signal always
   fannyTextEl.textContent='"…"';
   fannyTextEl.classList.add('show');
-  // Brief pulse on the orb
   orbWrap.style.transform='translate(-50%,-50%) scale(1.04)';
   setTimeout(()=>orbWrap.style.transform='',200);
+  
+  // Play cached Lizzie filler if ready
+  if(fillerReady&&fillerBlobs.length>0){
+    const blob=fillerBlobs[Math.floor(Math.random()*fillerBlobs.length)];
+    const url=URL.createObjectURL(blob);
+    fillerAudio=new Audio(url);
+    fillerAudio.volume=0.9;
+    fillerAudio.play().catch(()=>{});
+    fillerAudio.onended=()=>URL.revokeObjectURL(url);
+  }
+}
+
+function stopFiller(){
+  if(fillerAudio){fillerAudio.pause();fillerAudio=null;}
 }
 
 async function askFanny(msg){
@@ -533,6 +606,7 @@ async function askFanny(msg){
     if(team)setCountry(team);
     setMood(mood);
     sending=false;
+    stopFiller();
     speak(clean);
   }catch(e){
     sending=false;
@@ -658,6 +732,7 @@ document.getElementById('startBtn').addEventListener('click',async()=>{
   }
 
   initSpeech(stream);
+  prefetchFillers(); // pre-cache Lizzie filler sounds
 
   // Boot Fanny
   try{
