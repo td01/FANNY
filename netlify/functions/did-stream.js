@@ -58,11 +58,10 @@ exports.handler = async function(event) {
           script: {
             type: 'text',
             input: text,
-            provider: {
-              type: 'elevenlabs',
-              voice_id: 'EQx6HGDYjkDpcli6vorJ',
-              model_id: 'eleven_turbo_v2_5',
-              voice_config: { stability: 0.4, similarity_boost: 0.75, style: 0.4 }
+        provider: {
+              type: 'microsoft',
+              voice_id: 'en-GB-SoniaNeural',
+            }
             }
           },
           session_id: sessionId,
