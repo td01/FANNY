@@ -22,25 +22,16 @@ exports.handler = async function(event) {
 
     switch(action) {
 
-      // Get a client key for the frontend SDK
-      case 'client-key':
-        url = `${DID_API}/agents/client-key`;
-        payload = { allowed_domains: ['https://fannywc2.netlify.app', 'http://localhost:3000'] };
-        break;
-
-      // Create agent stream (returns offer + ICE servers)
       case 'create':
         url = `${DID_API}/agents/${AGENT_ID}/streams`;
         payload = {};
         break;
 
-      // SDP answer
       case 'sdp':
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/sdp`;
         payload = { answer: offer, session_id: sessionId };
         break;
 
-      // ICE candidate
       case 'ice':
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}/ice`;
         payload = {
@@ -51,7 +42,6 @@ exports.handler = async function(event) {
         };
         break;
 
-      // Send text — uses streams speak endpoint (bypasses D-ID LLM, uses our text)
       case 'talk':
         url = `${DID_API}/agents/${AGENT_ID}/streams/${streamId}`;
         payload = {
@@ -59,10 +49,8 @@ exports.handler = async function(event) {
             type: 'text',
             input: text,
             provider: {
-              type: 'elevenlabs',
-              voice_id: 'EQx6HGDYjkDpcli6vorJ',
-              model_id: 'eleven_turbo_v2_5',
-              voice_config: { stability: 0.4, similarity_boost: 0.75, style: 0.4 }
+              type: 'microsoft',
+              voice_id: 'en-GB-SoniaNeural',
             }
           },
           session_id: sessionId,
